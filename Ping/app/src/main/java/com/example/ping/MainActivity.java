@@ -13,6 +13,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,6 +39,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+        // run_speedtest.py & speedtest.py
+        // Able to initialize file with headers
+        // Unable to exec speedtest.py from run_speedtest.py
+        // (Chaquopy unable to launch script as subprocess)
+        if (!Python.isStarted())
+            Python.start(new AndroidPlatform(this));
+        Python py = Python.getInstance();
+        PyObject pyf = py.getModule("run_speedtest");
+        //PyObject obj = pyf.callAttr("main", 1, 1);
+        //System.out.println(load("speedtest.csv"));
+
 
         // Initialize GUI
         Button pingButton = (Button) findViewById(R.id.pingButton);
@@ -81,14 +98,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 export();
-                /*
-                String data = load();
-                // Ignore if output.csv not found
-                if (data.isEmpty()) {
-                    return;
-                }
-                System.out.println(data);
-                 */
             }
         });
 
@@ -113,22 +122,23 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // Read and return data from Export.csv
+    // Read and return data from file_name
     // Return data as a string
-    // Return empty string if output.csv does not exist
-    public String load() {
+    // Return empty string if file_name does not exist
+    public String load(String file_name) {
         String data = "";
         FileInputStream fis = null;
 
+
         // Ignore if no export file exists
-        File file = new File(getFilesDir()+"/"+FILE_NAME);
+        File file = new File(getFilesDir()+"/"+file_name);
         if (!file.exists()) {
             Toast.makeText(this, "Export file not found", Toast.LENGTH_LONG).show();
             return data;
         }
 
         try {
-            fis = openFileInput(FILE_NAME);
+            fis = openFileInput(file_name);
             InputStreamReader isr = new InputStreamReader(fis);
             BufferedReader br = new BufferedReader(isr);
             StringBuilder sb = new StringBuilder();
