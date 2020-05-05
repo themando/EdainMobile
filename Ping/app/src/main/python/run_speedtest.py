@@ -20,13 +20,17 @@ save_path = "/data/user/0/com.example.ping/files/"
 save_csvfile = os.path.join(save_path, 'speedtest.csv')
 #save_csvfile = os.path.join(save_path, datetime.utcnow().strftime('%y_%m_%d_%H-%M-%S') + '_speedtest.csv')
 
+# CSV output headers
+headers = ['timestamp', 'download', 'upload', 'ping', 'bytes_sent', 'bytes_received',
+           'server_url', 'server_lat', 'server_lon', 'server_name', 'server_country',
+           'server_sponsor', 'server_id', 'server_host', 'server_latency', 'client_ip',
+           'client_lat', 'client_lon', 'client_isp', 'client_isprating', 'client_country']
+
 
 # Speedtest function (requires 'speedtest.py' in the same directory)
-# ERROR HERE - CHAQUOPY UNABLE TO LAUNCH SCRIPT AS SUBPROCESS
 def speedtest():
-    cmd = [executable, 'speedtest.py', '--json']
-    proc = run(cmd, shell=False, stdout=PIPE, stderr=PIPE)
-    json_data = json.loads(proc.stdout.decode('utf-8'))
+    res = speed_script.main()
+    json_data = json.loads(res)
     return json_data
 
 
@@ -56,12 +60,6 @@ def sleep_minutes(minutes):
 
 
 def main(class_duration, interval):
-    # CSV output headers
-    headers = ['timestamp', 'download', 'upload', 'ping', 'bytes_sent', 'bytes_received',
-               'server_url', 'server_lat', 'server_lon', 'server_name', 'server_country',
-               'server_sponsor', 'server_id', 'server_host', 'server_latency', 'client_ip',
-               'client_lat', 'client_lon', 'client_isp', 'client_isprating', 'client_country']
-
     # New bare file with headers
     with open(save_csvfile, 'w') as f:
         writer = csv.writer(f)

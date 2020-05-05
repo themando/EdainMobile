@@ -1851,10 +1851,11 @@ def shell():
     if debug:
         DEBUG = True
 
-    if args.simple or args.csv or args.json:
-        quiet = True
-    else:
-        quiet = False
+    #if args.simple or args.csv or args.json:
+        #quiet = True
+    #else:
+        #quiet = False
+    quiet = True
 
     if args.csv or args.json:
         machine_format = True
@@ -1980,10 +1981,12 @@ def shell():
     if args.share and not machine_format:
         printer('Share results: %s' % results.share())
 
+    return results.json()
+
 
 def main():
     try:
-        shell()
+        return shell()
     except KeyboardInterrupt:
         printer('\nCancelling...', error=True)
     except (SpeedtestException, SystemExit):

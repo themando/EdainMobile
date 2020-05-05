@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
             Python.start(new AndroidPlatform(this));
         Python py = Python.getInstance();
         PyObject pyf = py.getModule("run_speedtest");
-        //PyObject obj = pyf.callAttr("main", 1, 1);
-        //System.out.println(load("speedtest.csv"));
+        PyObject obj = pyf.callAttr("main", 1, 1);
+        System.out.println(load("speedtest.csv"));
 
 
         // Initialize GUI
