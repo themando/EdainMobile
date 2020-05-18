@@ -1,12 +1,17 @@
 package com.example.ping;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.api.client.googleapis.batch.BatchRequest;
 import com.google.api.client.googleapis.batch.json.JsonBatchCallback;
@@ -23,16 +28,20 @@ import com.google.api.services.pagespeedonline.model.PagespeedApiLoadingExperien
 import com.google.api.services.pagespeedonline.model.PagespeedApiPagespeedResponseV5;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
 
 
 public class Page extends AppCompatActivity {
 
     private static final String GOOGLE_KEY = "AIzaSyBhrBJpeRJqPdOcf4QZy-zPz91el80Io_0";
+    private static final String HEADERS = "County,Location,Provider,UTC,URL,First_Contentful_Paint,First_Input_Delay\n";
+    private static final String FILE_NAME = "plt.csv";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +58,7 @@ public class Page extends AppCompatActivity {
         final EditText locationText = (EditText) findViewById(R.id.locationEditText);
         final EditText providerText = (EditText) findViewById(R.id.providerEditText);
 
-
-        // Click Load Button
+        // Load Button
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -76,16 +84,19 @@ public class Page extends AppCompatActivity {
                 String location = locationText.getText().toString();
                 String provider = providerText.getText().toString();
 
-                // Incremental PageSpeed Insights for urls
+                // Iterative PageSpeed Insights for urls
                 try {
                     PagespeedApiPagespeedResponseV5 insight = null;
+                    ArrayList<String> results = new ArrayList<>();
                     String result = "";
                     String url = "";
                     int idx;
+
                     FileInputStream fis = openFileInput("top-1m.csv");
                     InputStreamReader isr = new InputStreamReader(fis);
                     BufferedReader br = new BufferedReader(isr);
 
+                    // gather Insight from each url
                     for (int i = 0; i < numUrlsInt; i++) {
                         result = county+","+location+","+provider+",";
 
@@ -94,20 +105,99 @@ public class Page extends AppCompatActivity {
                         url = "https://"+url.substring(idx);
 
                         insight = getInsight(url, timeoutInt);
-                        result += formatInsight(insight);
-                        // Parse JSON output, save to csv
-                        // county,location,provider,utc,url,first_contentful_paint,first_input_delay
-                        System.out.println(result);
+                        if (insight != null) {
+                            result += formatInsight(insight);
+                            results.add(result);
+                        }
                     }
-
                     fis.close();
+
+                    // write results to csv
+                    writeCsv(results);
+
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Log.d("READ", "Error reading top-1m.csv");
+                    Log.d("API", "Error gathering Insights");
                 }
 
             }
         });
+
+        // Click Clear Button
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteCsv();
+            }
+        });
+
+        // Click Export Button
+        exportButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                export();
+            }
+        });
+    }
+
+    // Remove csv file
+    public void deleteCsv() {
+        boolean res = deleteFile(FILE_NAME);
+        Toast.makeText(this, "plt.csv cleared", Toast.LENGTH_LONG).show();
+    }
+
+    // Export csv file
+    public void export() {
+
+        try {
+            Context context = getApplicationContext();
+            File fileLocation = new File(getFilesDir(), FILE_NAME);
+            Uri path = FileProvider.getUriForFile(context, "com.example.Ping.fileprovider", fileLocation);
+            Intent fileIntent = new Intent(Intent.ACTION_SEND);
+            fileIntent.setType("text/csv");
+            fileIntent.putExtra(Intent.EXTRA_SUBJECT, "Page Load Time Data");
+            fileIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            fileIntent.putExtra(Intent.EXTRA_STREAM, path);
+            startActivity(Intent.createChooser(fileIntent, "Export plt.csv"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    // Write results to csv one line at a time
+    public void writeCsv(ArrayList<String> results) {
+        FileOutputStream fos = null;
+        boolean initCsv = false;
+
+        // Initialize csv file if one does not exist
+        File file = new File(getFilesDir()+"/"+FILE_NAME);
+        if (!file.exists()) {
+            initCsv = true;
+        }
+
+        try {
+            fos = new FileOutputStream(file, true);
+            if (initCsv) {
+                fos.write(HEADERS.getBytes());
+            }
+            for (int i = 0; i < results.size(); i++) {
+                fos.write(results.get(i).getBytes());
+            }
+            Toast.makeText(this, "Finished collecting page load times.", Toast.LENGTH_LONG).show();
+            fos.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d("WRITE", "Error writing to csv.");
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     // Return comma separated string of important metrics from PageSpeed Insight
@@ -120,12 +210,12 @@ public class Page extends AppCompatActivity {
         sb.append(raw.getId()+",");
 
         // Origin Loading Experience
-        // Keys: [FIRST_CONTENTFUL_PAINT_MS, FIRST_INPUT_DELAY_MS]
         //PagespeedApiLoadingExperienceV5 origExp = raw.getOriginLoadingExperience();
         //Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> origMetrics = origExp.getMetrics();
+        //PagespeedApiLoadingExperienceV5.MetricsElement first_content_orig = origMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
+        //PagespeedApiLoadingExperienceV5.MetricsElement first_input_orig = origMetrics.get("FIRST_INPUT_DELAY_MS");
 
         // Loading Experience
-        // Keys: [FIRST_CONTENTFUL_PAINT_MS, FIRST_INPUT_DELAY_MS]
         PagespeedApiLoadingExperienceV5 loadExp = raw.getLoadingExperience();
         Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> loadMetrics = loadExp.getMetrics();
         PagespeedApiLoadingExperienceV5.MetricsElement first_content = loadMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
@@ -133,6 +223,7 @@ public class Page extends AppCompatActivity {
         sb.append(first_content.get("category")+",");
         sb.append(first_input.get("category"));
 
+        sb.append("\n");
         return sb.toString();
     }
 
@@ -165,7 +256,7 @@ public class Page extends AppCompatActivity {
         return response;
     }
 
-    // UNUSED - Gather PageSpeed Insight results from batch requests
+    // Gather PageSpeed Insight results from batch requests
     // ** This method failed a lot during testing **
     void getInsight_batch(String[] urls, int numUrls, final int timeout) {
         Pagespeedonline p;
