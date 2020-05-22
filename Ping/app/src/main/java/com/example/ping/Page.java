@@ -5,6 +5,7 @@ import androidx.core.content.FileProvider;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +25,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.pagespeedonline.Pagespeedonline;
+import com.google.api.services.pagespeedonline.model.LighthouseResultV5;
 import com.google.api.services.pagespeedonline.model.PagespeedApiLoadingExperienceV5;
 import com.google.api.services.pagespeedonline.model.PagespeedApiPagespeedResponseV5;
 
@@ -34,13 +36,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
 public class Page extends AppCompatActivity {
 
     private static final String GOOGLE_KEY = "AIzaSyBhrBJpeRJqPdOcf4QZy-zPz91el80Io_0";
-    private static final String HEADERS = "County,Location,Provider,UTC,URL,First_Contentful_Paint,First_Input_Delay\n";
+    private static final String HEADERS = "County,Location,Provider,UTC,"+
+            "RequestedURL,FinalURL,LighthouseVersion,UserAgent,NetworkUserAgent,HostUserAgent,BenchmarkIndex,RunWarnings,ErrorCode,ErrorMessage,Timing,"+
+            "OriginExp-Overall,OriginExp-Paint-Percentile,OriginExp-Paint-Category,OriginExp-Paint-Min,OriginExp-Paint-Max,OriginExp-Paint-Proportion,"+
+            "OriginExp-Delay-Percentile,OriginExp-Delay-Category,OriginExp-Delay-Min,OriginExp-Delay-Max,OriginExp-Delay-Proportion\n";
     private static final String FILE_NAME = "plt.csv";
 
     @Override
@@ -201,27 +207,72 @@ public class Page extends AppCompatActivity {
     }
 
     // Return comma separated string of important metrics from PageSpeed Insight
-    // Current metrics - first content/input from loading experience
     String formatInsight(PagespeedApiPagespeedResponseV5 raw) {
         StringBuilder sb = new StringBuilder();
 
-        // utc, url
+        // utc
         sb.append(raw.getAnalysisUTCTimestamp()+",");
-        sb.append(raw.getId()+",");
+
+        // Lighthouse Result
+        LighthouseResultV5 lh = raw.getLighthouseResult();
+        sb.append(lh.getRequestedUrl()+",");
+        sb.append(lh.getFinalUrl()+",");
+        sb.append(lh.getLighthouseVersion()+",");
+        sb.append(lh.getUserAgent().replace(",","-")+",");
+
+        // Lighthouse environment
+        LighthouseResultV5.Environment env = lh.getEnvironment();
+        sb.append(env.getNetworkUserAgent().replace(",","-")+",");
+        sb.append(env.getHostUserAgent().replace(",","-")+",");
+        sb.append(env.getBenchmarkIndex().toString()+",");
+
+        // Lighthouse Warnings
+        List<Object> warn = lh.getRunWarnings();
+        String warnRes = "";
+        for (Object res : warn) {
+            warnRes += res.toString();
+        }
+        sb.append(warnRes+",");
+
+        // Lighthouse runtime error
+        LighthouseResultV5.RuntimeError err = lh.getRuntimeError();
+        if (err != null) {
+            sb.append(err.getCode() + ",");
+            sb.append(err.getMessage().replace(",","-") + ",");
+        } else {
+            sb.append(",,");
+        }
+
+        // Lighthouse timing
+        LighthouseResultV5.Timing tmg = lh.getTiming();
+        sb.append(tmg.getTotal().toString()+",");
 
         // Origin Loading Experience
-        //PagespeedApiLoadingExperienceV5 origExp = raw.getOriginLoadingExperience();
-        //Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> origMetrics = origExp.getMetrics();
-        //PagespeedApiLoadingExperienceV5.MetricsElement first_content_orig = origMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
-        //PagespeedApiLoadingExperienceV5.MetricsElement first_input_orig = origMetrics.get("FIRST_INPUT_DELAY_MS");
+        PagespeedApiLoadingExperienceV5 origExp = raw.getOriginLoadingExperience();
+        Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> origMetrics = origExp.getMetrics();
+        PagespeedApiLoadingExperienceV5.MetricsElement first_content_orig = origMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
+        PagespeedApiLoadingExperienceV5.MetricsElement first_input_orig = origMetrics.get("FIRST_INPUT_DELAY_MS");
+        sb.append(origExp.getOverallCategory()+",");
+
+        // Origin Loading - First Contentful Paint
+        sb.append(first_content_orig.getPercentile().toString()+",");
+        sb.append(first_content_orig.getCategory()+",");
+        sb.append(first_content_orig.getDistributions().get(0).getMin().toString()+",");
+        sb.append(first_content_orig.getDistributions().get(0).getMax().toString()+",");
+        sb.append(first_content_orig.getDistributions().get(0).getProportion().toString()+",");
+
+        // Origin Loading - First Input Delay
+        sb.append(first_input_orig.getPercentile().toString()+",");
+        sb.append(first_input_orig.getCategory()+",");
+        sb.append(first_input_orig.getDistributions().get(0).getMin().toString()+",");
+        sb.append(first_input_orig.getDistributions().get(0).getMax().toString()+",");
+        sb.append(first_input_orig.getDistributions().get(0).getProportion().toString());
 
         // Loading Experience
-        PagespeedApiLoadingExperienceV5 loadExp = raw.getLoadingExperience();
-        Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> loadMetrics = loadExp.getMetrics();
-        PagespeedApiLoadingExperienceV5.MetricsElement first_content = loadMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
-        PagespeedApiLoadingExperienceV5.MetricsElement first_input = loadMetrics.get("FIRST_INPUT_DELAY_MS");
-        sb.append(first_content.get("category")+",");
-        sb.append(first_input.get("category"));
+        //PagespeedApiLoadingExperienceV5 loadExp = raw.getLoadingExperience();
+        //Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> loadMetrics = loadExp.getMetrics();
+        //PagespeedApiLoadingExperienceV5.MetricsElement first_content_load = loadMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
+        //PagespeedApiLoadingExperienceV5.MetricsElement first_input_load = loadMetrics.get("FIRST_INPUT_DELAY_MS");
 
         sb.append("\n");
         return sb.toString();
