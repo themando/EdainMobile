@@ -1,53 +1,39 @@
 package com.example.ping;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Paint;
+import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Environment;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.DownloadListener;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.api.client.googleapis.batch.BatchRequest;
-import com.google.api.client.googleapis.batch.json.JsonBatchCallback;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.json.GoogleJsonError;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.pagespeedonline.Pagespeedonline;
-import com.google.api.services.pagespeedonline.model.LighthouseResultV5;
-import com.google.api.services.pagespeedonline.model.PagespeedApiLoadingExperienceV5;
-import com.google.api.services.pagespeedonline.model.PagespeedApiPagespeedResponseV5;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
+// WebPageTest is used for measuring and analyzing the performance of web pages.
+// https://sites.google.com/a/webpagetest.org/docs/
+//
+// The API key is limited to 200 page loads per day.
+// If need to do more testing then should consider running a private instance:
+// https://sites.google.com/a/webpagetest.org/docs/private-instances
 
 public class Page extends AppCompatActivity {
 
-    private static final String GOOGLE_KEY = "AIzaSyBhrBJpeRJqPdOcf4QZy-zPz91el80Io_0";
-    private static final String HEADERS = "County,Location,Provider,UTC,"+
-            "RequestedURL,FinalURL,LighthouseVersion,UserAgent,NetworkUserAgent,HostUserAgent,BenchmarkIndex,RunWarnings,ErrorCode,ErrorMessage,Timing,"+
-            "OriginExp-Overall,OriginExp-Paint-Percentile,OriginExp-Paint-Category,OriginExp-Paint-Min,OriginExp-Paint-Max,OriginExp-Paint-Proportion,"+
-            "OriginExp-Delay-Percentile,OriginExp-Delay-Category,OriginExp-Delay-Min,OriginExp-Delay-Max,OriginExp-Delay-Proportion\n";
-    private static final String FILE_NAME = "plt.csv";
+    private static final String API_KEY = "A.4d4a2d75f8fd7cd5eb23b9304071c1db";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,10 +42,8 @@ public class Page extends AppCompatActivity {
 
         // init GUI
         Button loadButton = (Button) findViewById(R.id.loadButton);
-        Button exportButton = (Button) findViewById(R.id.exportLoadButton);
-        Button clearButton = (Button) findViewById(R.id.clearLoadButton);
+        final EditText urlText = (EditText) findViewById(R.id.urlEditText);
         final EditText timeoutText = (EditText) findViewById(R.id.timeoutEditText);
-        final EditText numUrlsText = (EditText) findViewById(R.id.numUrlsEditText);
         final EditText countyText = (EditText) findViewById(R.id.countyEditText);
         final EditText locationText = (EditText) findViewById(R.id.locationEditText);
         final EditText providerText = (EditText) findViewById(R.id.providerEditText);
@@ -68,285 +52,113 @@ public class Page extends AppCompatActivity {
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 int timeoutInt;
-                int numUrlsInt;
                 String timeoutStr = timeoutText.getText().toString();
-                String numUrlsStr = numUrlsText.getText().toString();
+                final String test_url = urlText.getText().toString();
+                final String county = countyText.getText().toString();
+                final String location = locationText.getText().toString();
+                final String provider = providerText.getText().toString();
 
                 // Invalid inputs - empty
-                if (timeoutStr.isEmpty() || numUrlsStr.isEmpty()) {
+                if (test_url.isEmpty() || timeoutStr.isEmpty() || county.isEmpty()
+                        || location.isEmpty() || provider.isEmpty()) {
                     return;
                 } else {
                     timeoutInt = Integer.parseInt(timeoutStr);
-                    numUrlsInt = Integer.parseInt(numUrlsStr);
                 }
 
                 // Invalid inputs - values
-                if (timeoutInt <= 0 || numUrlsInt <= 0) {
+                if (timeoutInt <= 0) {
                     return;
                 }
 
-                String county = countyText.getText().toString();
-                String location = locationText.getText().toString();
-                String provider = providerText.getText().toString();
+                // Set WebView to download files from browser to sdcard/Download
+                WebView wv = new WebView(Page.this);
+                wv.setDownloadListener(new DownloadListener() {
+                    @Override
+                    public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
+                        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                        String test_site = test_url.substring(4,test_url.indexOf(".com"));
+                        String title = test_site+"_"+county+"_"+location+"_"+provider+".csv";
 
-                // Iterative PageSpeed Insights for urls
-                try {
-                    PagespeedApiPagespeedResponseV5 insight = null;
-                    ArrayList<String> results = new ArrayList<>();
-                    String result = "";
-                    String url = "";
-                    int idx;
-
-                    FileInputStream fis = openFileInput("top-1m.csv");
-                    InputStreamReader isr = new InputStreamReader(fis);
-                    BufferedReader br = new BufferedReader(isr);
-
-                    // gather Insight from each url
-                    for (int i = 0; i < numUrlsInt; i++) {
-                        result = county+","+location+","+provider+",";
-
-                        url = br.readLine();
-                        idx = url.indexOf(",")+1;
-                        url = "https://"+url.substring(idx);
-
-                        insight = getInsight(url, timeoutInt);
-                        if (insight != null) {
-                            result += formatInsight(insight);
-                            results.add(result);
-                        }
+                        request.setMimeType(mimeType);
+                        String cookies = CookieManager.getInstance().getCookie(url);
+                        request.addRequestHeader("cookie", cookies);
+                        request.addRequestHeader("User-Agent", userAgent);
+                        request.setDescription("Downloading file...");
+                        request.setTitle(title);
+                        request.allowScanningByMediaScanner();
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, title);
+                        DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                        dm.enqueue(request);
+                        Toast.makeText(getApplicationContext(), "Downloading File", Toast.LENGTH_LONG).show();
                     }
-                    fis.close();
+                });
 
-                    // write results to csv
-                    writeCsv(results);
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.d("API", "Error gathering Insights");
-                }
-
-            }
-        });
-
-        // Click Clear Button
-        clearButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteCsv();
-            }
-        });
-
-        // Click Export Button
-        exportButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                export();
-            }
-        });
-    }
-
-    // Remove csv file
-    public void deleteCsv() {
-        boolean res = deleteFile(FILE_NAME);
-        Toast.makeText(this, "plt.csv cleared", Toast.LENGTH_LONG).show();
-    }
-
-    // Export csv file
-    public void export() {
-
-        try {
-            Context context = getApplicationContext();
-            File fileLocation = new File(getFilesDir(), FILE_NAME);
-            Uri path = FileProvider.getUriForFile(context, "com.example.Ping.fileprovider", fileLocation);
-            Intent fileIntent = new Intent(Intent.ACTION_SEND);
-            fileIntent.setType("text/csv");
-            fileIntent.putExtra(Intent.EXTRA_SUBJECT, "Page Load Time Data");
-            fileIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            fileIntent.putExtra(Intent.EXTRA_STREAM, path);
-            startActivity(Intent.createChooser(fileIntent, "Export plt.csv"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    // Write results to csv one line at a time
-    public void writeCsv(ArrayList<String> results) {
-        FileOutputStream fos = null;
-        boolean initCsv = false;
-
-        // Initialize csv file if one does not exist
-        File file = new File(getFilesDir()+"/"+FILE_NAME);
-        if (!file.exists()) {
-            initCsv = true;
-        }
-
-        try {
-            fos = new FileOutputStream(file, true);
-            if (initCsv) {
-                fos.write(HEADERS.getBytes());
-            }
-            for (int i = 0; i < results.size(); i++) {
-                fos.write(results.get(i).getBytes());
-            }
-            Toast.makeText(this, "Finished collecting page load times.", Toast.LENGTH_LONG).show();
-            fos.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d("WRITE", "Error writing to csv.");
-        } finally {
-            if (fos != null) {
+                // Run WebPageTest
                 try {
-                    fos.close();
-                } catch (IOException e) {
+                    String testId;
+                    String statusText = "Test Incomplete";
+                    String run;
+                    JSONObject run_json;
+                    String test;
+                    JSONObject test_json;
+
+                    // run test
+                    run = getResponseText("http://www.webpagetest.org/runtest.php?url="+
+                            test_url+"&f=json&k="+ API_KEY);
+                    run_json = new JSONObject(run);
+                    testId = run_json.getJSONObject("data").getString("testId");
+
+                    // test status - wait until test complete or timeout exceeded
+                    int iters = 0;
+                    while (!statusText.equals("Test Complete") && iters*10 < timeoutInt) {
+                        TimeUnit.SECONDS.sleep(10);
+                        test = getResponseText("https://www.webpagetest.org/testStatus.php?" +
+                                "f=json&test=" + testId);
+                        test_json = new JSONObject(test);
+                        statusText = test_json.getString("statusText");
+                        iters += 1;
+                    }
+
+                    // timeout
+                    if (!statusText.equals("Test Complete")) {
+                        Toast.makeText(Page.this, "WebPageTest Timeout: "+test_url, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    // download test results csv - summary
+                    //wv.loadUrl("https://www.webpagetest.org/result/"+testId+"/page_data.csv");
+
+                    // download test results csv - details
+                    wv.loadUrl("https://www.webpagetest.org/result/"+testId+"/requests.csv");
+
+                }  catch (IOException | JSONException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-        }
+        });
     }
 
-    // Return comma separated string of important metrics from PageSpeed Insight
-    String formatInsight(PagespeedApiPagespeedResponseV5 raw) {
-        StringBuilder sb = new StringBuilder();
+    private String getResponseText(String stringUrl) throws IOException
+    {
+        StringBuilder response  = new StringBuilder();
 
-        // utc
-        sb.append(raw.getAnalysisUTCTimestamp()+",");
-
-        // Lighthouse Result
-        LighthouseResultV5 lh = raw.getLighthouseResult();
-        sb.append(lh.getRequestedUrl()+",");
-        sb.append(lh.getFinalUrl()+",");
-        sb.append(lh.getLighthouseVersion()+",");
-        sb.append(lh.getUserAgent().replace(",","-")+",");
-
-        // Lighthouse environment
-        LighthouseResultV5.Environment env = lh.getEnvironment();
-        sb.append(env.getNetworkUserAgent().replace(",","-")+",");
-        sb.append(env.getHostUserAgent().replace(",","-")+",");
-        sb.append(env.getBenchmarkIndex().toString()+",");
-
-        // Lighthouse Warnings
-        List<Object> warn = lh.getRunWarnings();
-        String warnRes = "";
-        for (Object res : warn) {
-            warnRes += res.toString();
+        URL url = new URL(stringUrl);
+        HttpURLConnection httpconn = (HttpURLConnection) url.openConnection();
+        if (httpconn.getResponseCode() == HttpURLConnection.HTTP_OK)
+        {
+            BufferedReader input = new BufferedReader(new InputStreamReader(httpconn.getInputStream()),8192);
+            String strLine = null;
+            while ((strLine = input.readLine()) != null)
+            {
+                response.append(strLine);
+            }
+            input.close();
         }
-        sb.append(warnRes+",");
-
-        // Lighthouse runtime error
-        LighthouseResultV5.RuntimeError err = lh.getRuntimeError();
-        if (err != null) {
-            sb.append(err.getCode() + ",");
-            sb.append(err.getMessage().replace(",","-") + ",");
-        } else {
-            sb.append(",,");
-        }
-
-        // Lighthouse timing
-        LighthouseResultV5.Timing tmg = lh.getTiming();
-        sb.append(tmg.getTotal().toString()+",");
-
-        // Origin Loading Experience
-        PagespeedApiLoadingExperienceV5 origExp = raw.getOriginLoadingExperience();
-        Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> origMetrics = origExp.getMetrics();
-        PagespeedApiLoadingExperienceV5.MetricsElement first_content_orig = origMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
-        PagespeedApiLoadingExperienceV5.MetricsElement first_input_orig = origMetrics.get("FIRST_INPUT_DELAY_MS");
-        sb.append(origExp.getOverallCategory()+",");
-
-        // Origin Loading - First Contentful Paint
-        sb.append(first_content_orig.getPercentile().toString()+",");
-        sb.append(first_content_orig.getCategory()+",");
-        sb.append(first_content_orig.getDistributions().get(0).getMin().toString()+",");
-        sb.append(first_content_orig.getDistributions().get(0).getMax().toString()+",");
-        sb.append(first_content_orig.getDistributions().get(0).getProportion().toString()+",");
-
-        // Origin Loading - First Input Delay
-        sb.append(first_input_orig.getPercentile().toString()+",");
-        sb.append(first_input_orig.getCategory()+",");
-        sb.append(first_input_orig.getDistributions().get(0).getMin().toString()+",");
-        sb.append(first_input_orig.getDistributions().get(0).getMax().toString()+",");
-        sb.append(first_input_orig.getDistributions().get(0).getProportion().toString());
-
-        // Loading Experience
-        //PagespeedApiLoadingExperienceV5 loadExp = raw.getLoadingExperience();
-        //Map<String, PagespeedApiLoadingExperienceV5.MetricsElement> loadMetrics = loadExp.getMetrics();
-        //PagespeedApiLoadingExperienceV5.MetricsElement first_content_load = loadMetrics.get("FIRST_CONTENTFUL_PAINT_MS");
-        //PagespeedApiLoadingExperienceV5.MetricsElement first_input_load = loadMetrics.get("FIRST_INPUT_DELAY_MS");
-
-        sb.append("\n");
-        return sb.toString();
+        return response.toString();
     }
-
-    // Return PageSpeed Insight results from one address
-    // Return null on failure
-    PagespeedApiPagespeedResponseV5 getInsight(String url, final int timeout) {
-        Pagespeedonline p;
-        Pagespeedonline.Pagespeedapi.Runpagespeed runpagespeed;
-        PagespeedApiPagespeedResponseV5 response = null;
-        JsonFactory jsonFactory = new JacksonFactory();
-        HttpTransport transport = new com.google.api.client.http.javanet.NetHttpTransport();
-
-        HttpRequestInitializer httpRequestInitializer = new HttpRequestInitializer() {
-            @Override
-            public void initialize(HttpRequest httpRequest) throws IOException {
-                httpRequest.setReadTimeout(timeout*1000); // milliseconds
-            }
-        };
-
-        p = new Pagespeedonline.Builder(transport, jsonFactory, httpRequestInitializer).setApplicationName("Edain Mobile").build();
-
-        try {
-            runpagespeed = p.pagespeedapi().runpagespeed(url).setKey(GOOGLE_KEY).setStrategy("mobile");
-            response = runpagespeed.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d("API", "Error executing PageSpeed Insights.");
-        }
-
-        return response;
-    }
-
-    // Gather PageSpeed Insight results from batch requests
-    // ** This method failed a lot during testing **
-    void getInsight_batch(String[] urls, int numUrls, final int timeout) {
-        Pagespeedonline p;
-        BatchRequest batch;
-
-        // Callback to log batch status
-        JsonBatchCallback<PagespeedApiPagespeedResponseV5> callback = new JsonBatchCallback<PagespeedApiPagespeedResponseV5>() {
-
-            public void onSuccess(PagespeedApiPagespeedResponseV5 response, HttpHeaders responseHeaders) {
-                // Collect response here if decide to use method
-                System.out.println("Success");
-            }
-            public void onFailure(GoogleJsonError e, HttpHeaders responseHeaders) {
-                System.out.println("Fail");
-            }
-        };
-
-        JsonFactory jsonFactory = new JacksonFactory();
-        HttpTransport transport = new com.google.api.client.http.javanet.NetHttpTransport();
-        HttpRequestInitializer httpRequestInitializer = new HttpRequestInitializer() {
-            @Override
-            public void initialize(HttpRequest httpRequest) {
-                httpRequest.setReadTimeout(timeout*1000); // milliseconds
-            }
-        };
-
-        p = new Pagespeedonline.Builder(transport, jsonFactory, httpRequestInitializer).setApplicationName("Edain Mobile").build();
-        batch = p.batch(httpRequestInitializer);
-
-        try {
-            for (int i = 0; i < numUrls; i++) {
-                Pagespeedonline.Pagespeedapi.Runpagespeed check = p.pagespeedapi().runpagespeed(urls[i]).setKey(GOOGLE_KEY).setStrategy("mobile");
-                check.queue(batch, callback);
-            }
-            batch.execute();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d("API", "Error executing PageSpeed Insights batch request.");
-        }
-    }
-
 }

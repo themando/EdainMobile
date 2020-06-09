@@ -10,15 +10,21 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
+
+// Using Chaquopy: Python SDK for Android to execute run_speedtest.py
+// https://chaquo.com/chaquopy/
+//
+// Running unlicensed version of Chaquopy:
+// The unlicensed SDK is fully functional, but apps built with it will display
+// a notification on startup, and will only run for 5 minutes at a time.
+// To remove these restrictions, a license is required.
+// https://chaquo.com/chaquopy/license/
 
 public class Speed extends AppCompatActivity {
     private static final String FILE_NAME = "speedtest.csv";
