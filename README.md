@@ -4,12 +4,13 @@ EdainMobile provides a set of tools to measure network performance, network spee
 
 ## Ping
 
-The Ping module sends a specified amount of packets to a chosen network host. Results are aggregated in a file (.csv), which may be cleared and re-written using the Clear button. The resulting .csv file (ping.csv) may be exported from the app via Google Drive using the corresponding Export button. The following ping statistics are collected in ping.csv: *Timestamp, Server, Packets, Loss, Min, Avg, Max, Stddev*
+The Ping module sends a specified amount of packets to a chosen network host. Results are aggregated in a file (.csv), which may be cleared and re-written using the Clear button. The resulting .csv file (ping.csv) may be exported from the app via Google Drive using the corresponding Export button. 
+
+The following statistics are collected in ping.csv: *Timestamp, Server, Packets, Loss, Min, Avg, Max, Stddev*
 
 ## Speed Test
 
-The Speed Test module runs and collects results from speedtest.net, testing the speed and performance of the device's internet connection. Tests are ran at user-defined intervals (minutes), where class duration is usually 75 mins and testing interval is
-typically every 15 minutes. Results are aggregated in a common .csv file (speedtest.csv) and may be cleared or exported via Google Drive using the corresponding Clear and Export buttons.
+The Speed Test module runs and collects results from speedtest.net, testing the speed and performance of the device's internet connection. Tests are run at user-defined intervals (minutes), where class duration is usually 75 minutes and testing interval is typically every 15 minutes. Results are aggregated in a common .csv file (speedtest.csv) and may be cleared or exported via Google Drive using the corresponding Clear and Export buttons.
 
 https://www.speedtest.net/
 
