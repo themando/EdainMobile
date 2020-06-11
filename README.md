@@ -15,6 +15,6 @@ https://www.speedtest.net/
 
 ## Page Load
 
-The Page Load module utilizes WebPageTest.org to measure and analyze the performance of web pages. Tests are performed one domain at a time, where test time is limited to a maximum user-defined Timeout Seconds. County, Location and Provider inputs are also required and are stored in the file name of the test results file (.csv). Test result files are stored in the devices Download folder.
+The Page Load module utilizes WebPageTest.org to measure and analyze the performance of web pages. Tests are performed one domain at a time, where test time is limited to a maximum user-defined Timeout Seconds. County, Location and Provider inputs are also required and are stored in the file name of the test results file (.csv). Test result files are stored in the device's Download folder.
 
 https://sites.google.com/a/webpagetest.org/docs/
