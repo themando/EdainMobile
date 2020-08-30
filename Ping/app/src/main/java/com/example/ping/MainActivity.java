@@ -2,16 +2,18 @@ package com.example.ping;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toolbar;
 
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
         // init GUI
         Button pingButton = (Button) findViewById(R.id.pingPageButton);
+        Button traceButton = (Button) findViewById(R.id.traceButton);
         Button speedButton = (Button) findViewById(R.id.speedPageButton);
         Button loadButton = (Button) findViewById(R.id.loadPageButton);
 
@@ -37,6 +40,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent startIntent = new Intent(getApplicationContext(), Ping.class);
+                startActivity(startIntent);
+            }
+        });
+
+        // Trace page
+        traceButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent startIntent = new Intent(getApplicationContext(), TraceActivity.class);
                 startActivity(startIntent);
             }
         });
