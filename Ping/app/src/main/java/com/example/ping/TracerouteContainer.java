@@ -7,12 +7,14 @@ public class TracerouteContainer implements Serializable {
 	private static final long serialVersionUID = 1034744411998219581L;
 
 	private String hostname;
+	private String URL;
 	private String ip;
 	private float ms;
 	private boolean isSuccessful;
 
-	public TracerouteContainer(String hostname, String ip, float ms, boolean isSuccessful) {
+	public TracerouteContainer(String hostname, String URL, String ip, float ms, boolean isSuccessful) {
 		this.hostname = hostname;
+		this.URL = URL;
 		this.ip = ip;
 		this.ms = ms;
 		this.isSuccessful = isSuccessful;
@@ -24,6 +26,14 @@ public class TracerouteContainer implements Serializable {
 
 	public void setHostname(String hostname) {
 		this.hostname = hostname;
+	}
+
+	public String getURL() {
+		return URL;
+	}
+
+	public void setURL(String URL) {
+		this.URL = URL;
 	}
 
 	public String getIp() {

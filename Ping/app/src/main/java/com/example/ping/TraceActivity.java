@@ -1,5 +1,6 @@
 package com.example.ping;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -34,14 +35,24 @@ import java.util.List;
 public class TraceActivity extends Activity {
 
 	public static final String tag = "TraceroutePing";
-	public static final String INTENT_TRACE = "INTENT_TRACE";
+	public static final String[] TRANCO_TOP_10 = {
+			"www.google.com",
+					"www.facebook.com",
+					"www.youtube.com",
+					"www.microsoft.com",
+					"www.twitter.com",
+					"www.tmall.com",
+					"www.instagram.com",
+					"www.netflix.com",
+					"www.windowsupdate.com",
+					"www.linkedin.com"};
 
-	private Button buttonLaunch, buttonExport;
-	private EditText editTextPing;
-	private String URL;
+	private Button buttonLaunch, buttonExport,buttonTranco;
+	private EditText editTextPing,editTextFile;
 	private ProgressBar progressBarPing;
 	private ListView listViewTraceroute;
 	private TraceListAdapter traceListAdapter;
+	private String fileName; 
 
 	private TracerouteWithPing tracerouteWithPing;
 	private final int maxTtl = 255;
@@ -60,7 +71,10 @@ public class TraceActivity extends Activity {
 
 		this.buttonLaunch = (Button) this.findViewById(R.id.buttonLaunch);
 		this.buttonExport = (Button) findViewById(R.id.buttonExport);
+		this.buttonTranco = (Button) findViewById(R.id.buttonTranco);
 		this.editTextPing = (EditText) this.findViewById(R.id.editTextPing);
+		this.editTextFile = (EditText) this.findViewById(R.id.editTextFile);
+		this.fileName = FILE_NAME;
 		this.listViewTraceroute = (ListView) this.findViewById(R.id.listViewTraceroute);
 		this.progressBarPing = (ProgressBar) this.findViewById(R.id.progressBarPing);
 
@@ -71,19 +85,42 @@ public class TraceActivity extends Activity {
 	 * initView, init the main view components (action, adapter...)
 	 */
 	private void initView() {
+		traceListAdapter = new TraceListAdapter(getApplicationContext());
+		listViewTraceroute.setAdapter(traceListAdapter);
+
 		buttonLaunch.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				editTextPing.setFocusable(false);
 				if (editTextPing.getText().length() == 0) {
 					Toast.makeText(TraceActivity.this, getString(R.string.no_text), Toast.LENGTH_SHORT).show();
 				} else {
+					if (editTextFile.getText().length() != 0) {
+						fileName = String.valueOf(editTextFile.getText());
+					}
+					Toast.makeText(TraceActivity.this, "Trace routes will be saved at: \n" + getFilesDir()+"/"+fileName, Toast.LENGTH_SHORT).show();
 					traces.clear();
 					traceListAdapter.notifyDataSetChanged();
 					startProgressBar();
 					hideSoftwareKeyboard(editTextPing);
-					URL = editTextPing.getText().toString();
 					tracerouteWithPing.executeTraceroute(editTextPing.getText().toString(), maxTtl);
 				}
+				editTextPing.setFocusable(false);
+			}
+		});
+
+		buttonTranco.setOnClickListener(new OnClickListener() {
+			@SuppressLint("SetTextI18n")
+			@Override
+			public void onClick(View v) {
+				Toast.makeText(TraceActivity.this, "Trace routes will be saved to trace_ping.csv", Toast.LENGTH_SHORT).show();
+				traces.clear();
+				traceListAdapter.notifyDataSetChanged();
+				startProgressBar();
+				editTextPing.setFocusable(false);
+				editTextPing.setText("TRANCO TOP 10");
+				tracerouteWithPing.executeTrancoTraceroute(maxTtl,TRANCO_TOP_10);
+				editTextPing.setFocusable(true);
 			}
 		});
 
@@ -94,16 +131,15 @@ public class TraceActivity extends Activity {
 			}
 		});
 
-		traceListAdapter = new TraceListAdapter(getApplicationContext());
-		listViewTraceroute.setAdapter(traceListAdapter);
 	}
+
 
 	// Export csv file
 	public void export() {
 
 		try {
 			Context context = getApplicationContext();
-			File fileLocation = new File(getFilesDir(), FILE_NAME);
+			File fileLocation = new File(getFilesDir(), fileName);
 			Uri path = FileProvider.getUriForFile(context, "com.example.Ping.fileprovider", fileLocation);
 			Intent fileIntent = new Intent(Intent.ACTION_SEND);
 			fileIntent.setType("text/csv");
@@ -123,7 +159,7 @@ public class TraceActivity extends Activity {
 		boolean initCsv = false;
 
 		// Initialize csv file if one does not exist
-		File file = new File(getFilesDir()+"/"+FILE_NAME);
+		File file = new File(getFilesDir()+"/"+fileName);
 		if (!file.exists()) {
 			initCsv = true;
 		}
@@ -180,6 +216,7 @@ public class TraceActivity extends Activity {
 			return position;
 		}
 
+		@SuppressLint("SetTextI18n")
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ViewHolder holder;
 
@@ -207,6 +244,10 @@ public class TraceActivity extends Activity {
 			}
 
 			TracerouteContainer currentTrace = getItem(position);
+			@SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss \n dd/MM/yy");
+			String format = simpleDateFormat.format(new Date());
+			String trace = format + ','  + currentTrace.getURL() + ',' + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")" + ',' + currentTrace.getMs() + "ms" + "\n";
+			writeCsv(trace);
 
 			if (position % 2 == 1) {
 				convertView.setBackgroundResource(R.drawable.table_odd_lines);
@@ -221,12 +262,8 @@ public class TraceActivity extends Activity {
 			}
 
 			holder.textViewNumber.setText((position+1) + "");
-			holder.textViewIp.setText(currentTrace.getHostname() + " (" + currentTrace.getIp() + ")");
+			holder.textViewIp.setText("[" + currentTrace.getURL() + "]" + "\n" + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")");
 			holder.textViewTime.setText(currentTrace.getMs() + "ms");
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy-hh-mm-ss");
-			String format = simpleDateFormat.format(new Date());
-			String trace = format + ',' + URL + ',' + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")" + ',' + currentTrace.getMs() + "ms";
-			writeCsv(trace);
 			return convertView;
 		}
 

@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 
+
 public class TracerouteWithPing {
 
 	private static final String PING = "PING";
@@ -26,7 +27,8 @@ public class TracerouteWithPing {
 	private TracerouteContainer latestTrace;
 	private int ttl;
 	private int finishedTasks;
-	private String urlToPing;
+	private String url;
+	private String[] urls;
 	private String ipToPing;
 	private float elapsedTime;
 	private TraceActivity context;
@@ -42,7 +44,7 @@ public class TracerouteWithPing {
 
 	/**
 	 * Launches the Traceroute
-	 * 
+	 *
 	 * @param url
 	 *            The url to trace
 	 * @param maxTtl
@@ -51,9 +53,19 @@ public class TracerouteWithPing {
 	public void executeTraceroute(String url, int maxTtl) {
 		this.ttl = 1;
 		this.finishedTasks = 0;
-		this.urlToPing = url;
+		this.url= url;
 
-		new ExecutePingAsyncTask(maxTtl).execute();
+		new ExecutePingAsyncTask(maxTtl,url).execute();
+	}
+
+	public void executeTrancoTraceroute(int maxTtl, String... urls) {
+		this.ttl = 1;
+		this.finishedTasks = 0;
+		this.urls= urls;
+
+		for(int i=0; i<urls.length;i++){
+			new ExecutePingAsyncTask(maxTtl,urls[i]).execute();
+		}
 	}
 
 	/**
@@ -105,7 +117,7 @@ public class TracerouteWithPing {
 			super.onPostExecute(result);
 		}
 	}
-	
+
 	/**
 	 * The task that ping an ip, with increasing time to live (ttl) value
 	 */
@@ -113,9 +125,11 @@ public class TracerouteWithPing {
 
 		private boolean isCancelled;
 		private int maxTtl;
+		private String urlToPing;
 
-		public ExecutePingAsyncTask(int maxTtl) {
+		public ExecutePingAsyncTask(int maxTtl, String urlToPing) {
 			this.maxTtl = maxTtl;
+			this.urlToPing = urlToPing;
 		}
 
 		/**
@@ -128,15 +142,15 @@ public class TracerouteWithPing {
 					String res = launchPing(urlToPing);
 
 					TracerouteContainer trace;
-                    			String ip = parseIpFromPing(res);
+					String ip = parseIpFromPing(res);
 
 					if (res.contains(UNREACHABLE_PING) && !res.contains(EXCEED_PING)) {
 						// Create the TracerouteContainer object when ping
 						// failed
-						trace = new TracerouteContainer("", ip, elapsedTime, false);
+						trace = new TracerouteContainer("",urlToPing, ip, elapsedTime, false);
 					} else {
 						// Create the TracerouteContainer object when succeed
-						trace = new TracerouteContainer("", ip, ttl == maxTtl ? Float.parseFloat(parseTimeFromPing(res))
+						trace = new TracerouteContainer("",urlToPing, ip, ttl == maxTtl ? Float.parseFloat(parseTimeFromPing(res))
 								: elapsedTime, true);
 					}
 
@@ -146,18 +160,18 @@ public class TracerouteWithPing {
 					String hostname = inetAddr.getHostName();
 					String canonicalHostname = inetAddr.getCanonicalHostName();
 					trace.setHostname(hostname);
-                                       latestTrace = trace;
-                                       Log.d(TraceActivity.tag, "hostname : " + hostname);
+					latestTrace = trace;
+					Log.d(TraceActivity.tag, "hostname : " + hostname);
 					Log.d(TraceActivity.tag, "canonicalHostname : " + canonicalHostname);
 
 					// Store the TracerouteContainer object
 					Log.d(TraceActivity.tag, trace.toString());
 
-                    			// Not refresh list if this ip is the final ip but the ttl is not maxTtl
-                    			// this row will be inserted later
-                    			if (!ip.equals(ipToPing) || ttl == maxTtl) {
-                        			context.refreshList(trace);
-                    			}
+					// Not refresh list if this ip is the final ip but the ttl is not maxTtl
+					// this row will be inserted later
+					if (!ip.equals(ipToPing) || ttl == maxTtl) {
+						context.refreshList(trace);
+					}
 
 					return res;
 				} catch (final Exception e) {
@@ -176,7 +190,7 @@ public class TracerouteWithPing {
 
 		/**
 		 * Launches ping command
-		 * 
+		 *
 		 * @param url
 		 *            The url to ping
 		 * @return The ping string
@@ -241,14 +255,14 @@ public class TracerouteWithPing {
 							if (latestTrace != null && latestTrace.getIp().equals(ipToPing)) {
 								if (ttl < maxTtl) {
 									ttl = maxTtl;
-									new ExecutePingAsyncTask(maxTtl).execute();
+									new ExecutePingAsyncTask(maxTtl,urlToPing).execute();
 								} else {
 									context.stopProgressBar();
 								}
 							} else {
 								if (ttl < maxTtl) {
 									ttl++;
-									new ExecutePingAsyncTask(maxTtl).execute();
+									new ExecutePingAsyncTask(maxTtl,urlToPing).execute();
 								}
 							}
 //							context.refreshList(traces);
@@ -270,7 +284,7 @@ public class TracerouteWithPing {
 
 		/**
 		 * Handles exception on ping
-		 * 
+		 *
 		 * @param e
 		 *            The exception thrown
 		 */
@@ -296,7 +310,7 @@ public class TracerouteWithPing {
 
 	/**
 	 * Gets the ip from the string returned by a ping
-	 * 
+	 *
 	 * @param ping
 	 *            The string returned by a ping command
 	 * @return The ip contained in the ping
@@ -338,7 +352,7 @@ public class TracerouteWithPing {
 
 	/**
 	 * Gets the final ip we want to ping (example: if user fullfilled google.fr, final ip could be 8.8.8.8)
-	 * 
+	 *
 	 * @param ping
 	 *            The string returned by a ping command
 	 * @return The ip contained in the ping
@@ -358,7 +372,7 @@ public class TracerouteWithPing {
 
 	/**
 	 * Gets the time from ping command (if there is)
-	 * 
+	 *
 	 * @param ping
 	 *            The string returned by a ping command
 	 * @return The time contained in the ping
@@ -378,7 +392,7 @@ public class TracerouteWithPing {
 
 	/**
 	 * Check for connectivity (wifi and mobile)
-	 * 
+	 *
 	 * @return true if there is a connectivity, false otherwise
 	 */
 	public boolean hasConnectivity() {
