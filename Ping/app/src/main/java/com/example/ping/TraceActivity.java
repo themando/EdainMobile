@@ -1,3 +1,7 @@
+/*
+The code given at https://github.com/olivierg13/TraceroutePing was used as a reference
+ */
+
 package com.example.ping;
 
 import android.annotation.SuppressLint;
@@ -91,7 +95,6 @@ public class TraceActivity extends Activity {
 		buttonLaunch.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				editTextPing.setFocusable(false);
 				if (editTextPing.getText().length() == 0) {
 					Toast.makeText(TraceActivity.this, getString(R.string.no_text), Toast.LENGTH_SHORT).show();
 				} else {
@@ -105,7 +108,6 @@ public class TraceActivity extends Activity {
 					hideSoftwareKeyboard(editTextPing);
 					tracerouteWithPing.executeTraceroute(editTextPing.getText().toString(), maxTtl);
 				}
-				editTextPing.setFocusable(false);
 			}
 		});
 
@@ -120,7 +122,6 @@ public class TraceActivity extends Activity {
 				editTextPing.setFocusable(false);
 				editTextPing.setText("TRANCO TOP 10");
 				tracerouteWithPing.executeTrancoTraceroute(maxTtl,TRANCO_TOP_10);
-				editTextPing.setFocusable(true);
 			}
 		});
 
@@ -227,14 +228,12 @@ public class TraceActivity extends Activity {
 
 				TextView textViewNumber = (TextView) convertView.findViewById(R.id.textViewNumber);
 				TextView textViewIp = (TextView) convertView.findViewById(R.id.textViewIp);
-				TextView textViewTime = (TextView) convertView.findViewById(R.id.textViewTime);
 				ImageView imageViewStatusPing = (ImageView) convertView.findViewById(R.id.imageViewStatusPing);
 
 				// Set up the ViewHolder.
 				holder = new ViewHolder();
 				holder.textViewNumber = textViewNumber;
 				holder.textViewIp = textViewIp;
-				holder.textViewTime = textViewTime;
 				holder.imageViewStatusPing = imageViewStatusPing;
 
 				// Store the holder with the view.
@@ -246,7 +245,7 @@ public class TraceActivity extends Activity {
 			TracerouteContainer currentTrace = getItem(position);
 			@SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("hh:mm:ss \n dd/MM/yy");
 			String format = simpleDateFormat.format(new Date());
-			String trace = format + ','  + currentTrace.getURL() + ',' + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")" + ',' + currentTrace.getMs() + "ms" + "\n";
+			String trace = format + ','  + currentTrace.getURL() + ',' + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")" + "\n";
 			writeCsv(trace);
 
 			if (position % 2 == 1) {
@@ -263,7 +262,6 @@ public class TraceActivity extends Activity {
 
 			holder.textViewNumber.setText((position+1) + "");
 			holder.textViewIp.setText("[" + currentTrace.getURL() + "]" + "\n" + currentTrace.getHostname() + " (" + currentTrace.getIp() + ")");
-			holder.textViewTime.setText(currentTrace.getMs() + "ms");
 			return convertView;
 		}
 

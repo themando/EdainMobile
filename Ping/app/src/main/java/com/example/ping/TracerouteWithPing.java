@@ -1,3 +1,7 @@
+/*
+The code given at https://github.com/olivierg13/TraceroutePing was used as a reference
+ */
+
 package com.example.ping;
 
 import android.annotation.SuppressLint;
@@ -147,11 +151,10 @@ public class TracerouteWithPing {
 					if (res.contains(UNREACHABLE_PING) && !res.contains(EXCEED_PING)) {
 						// Create the TracerouteContainer object when ping
 						// failed
-						trace = new TracerouteContainer("",urlToPing, ip, elapsedTime, false);
+						trace = new TracerouteContainer("",urlToPing, ip, false);
 					} else {
 						// Create the TracerouteContainer object when succeed
-						trace = new TracerouteContainer("",urlToPing, ip, ttl == maxTtl ? Float.parseFloat(parseTimeFromPing(res))
-								: elapsedTime, true);
+						trace = new TracerouteContainer("",urlToPing, ip, true);
 					}
 
 					// Get the host name from ip (unix ping do not support
@@ -206,7 +209,6 @@ public class TracerouteWithPing {
 
 			Log.d(TraceActivity.tag, "Will launch : " + command + url);
 
-			long startTime = System.nanoTime();
 			elapsedTime = 0;
 			// timeout task
 			new TimeOutAsyncTask(this, ttl).execute();
@@ -219,10 +221,6 @@ public class TracerouteWithPing {
 			String res = "";
 			while ((s = stdInput.readLine()) != null) {
 				res += s + "\n";
-				if (s.contains(FROM_PING) || s.contains(SMALL_FROM_PING)) {
-					// We store the elapsedTime when the line from ping comes
-					elapsedTime = (System.nanoTime() - startTime) / 1000000.0f;
-				}
 			}
 
 			p.destroy();
@@ -231,7 +229,7 @@ public class TracerouteWithPing {
 				throw new IllegalArgumentException();
 			}
 
-			// Store the wanted ip adress to compare with ping result
+			// Store the wanted ip address to compare with ping result
 			if (ttl == 1) {
 				ipToPing = parseIpToPingFromPing(res);
 			}
@@ -370,25 +368,6 @@ public class TracerouteWithPing {
 		return ip;
 	}
 
-	/**
-	 * Gets the time from ping command (if there is)
-	 *
-	 * @param ping
-	 *            The string returned by a ping command
-	 * @return The time contained in the ping
-	 */
-	private String parseTimeFromPing(String ping) {
-		String time = "";
-		if (ping.contains(TIME_PING)) {
-			int index = ping.indexOf(TIME_PING);
-
-			time = ping.substring(index + 5);
-			index = time.indexOf(" ");
-			time = time.substring(0, index);
-		}
-
-		return time;
-	}
 
 	/**
 	 * Check for connectivity (wifi and mobile)
