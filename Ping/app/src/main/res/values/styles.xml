@@ -8,4 +8,8 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="AppTheme.progressbar">
+        <item name="colorAccent">@color/progressBarColor</item>
+    </style>
+
 </resources>

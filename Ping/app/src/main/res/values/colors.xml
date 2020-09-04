@@ -3,4 +3,6 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+    <color name="Grey">#f3f3f3</color>
+    <color name="progressBarColor">@android:color/holo_orange_dark</color>
 </resources>

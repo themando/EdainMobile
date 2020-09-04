@@ -16,6 +16,7 @@
         <activity android:name=".Page"></activity>
         <activity android:name=".Ping" />
         <activity android:name=".Speed" />
+        <activity android:name=".FragmentHolder" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

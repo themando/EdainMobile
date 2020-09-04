@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         Button pingButton = (Button) findViewById(R.id.pingPageButton);
         Button speedButton = (Button) findViewById(R.id.speedPageButton);
         Button loadButton = (Button) findViewById(R.id.loadPageButton);
+        final Button dnsResolutionButton = (Button) findViewById(R.id.dnsResolutionButton);
 
         // Ping page
         pingButton.setOnClickListener(new View.OnClickListener() {
@@ -51,6 +52,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // DNS Resolution Test Page
+        dnsResolutionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent startIntent = new Intent(getApplicationContext(), FragmentHolder.class);
+                startActivity(startIntent);
+            }
+        });
         // Page Load Test page
         loadButton.setOnClickListener(new View.OnClickListener() {
 
