@@ -3,6 +3,7 @@ apply plugin: 'com.chaquo.python'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
+    ndkVersion '20.0.5594570'
 
     defaultConfig {
         applicationId "com.example.ping"
@@ -16,7 +17,10 @@ android {
             abiFilters "armeabi-v7a", "x86"
         }
         python {
-            buildPython "/usr/local/bin/python3"
+            buildPython "/home/jj/anaconda3/bin/python"
+            pyc {
+                src false
+            }
             pip {
                 install "selenium"
             }

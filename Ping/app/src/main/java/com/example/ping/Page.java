@@ -2,6 +2,7 @@ package com.example.ping;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 // If need to do more testing then should consider running a private instance:
 // https://sites.google.com/a/webpagetest.org/docs/private-instances
 
-public class Page extends AppCompatActivity {
+public class Page extends Activity {
 
     private static final String API_KEY = "A.4d4a2d75f8fd7cd5eb23b9304071c1db";
 
