@@ -14,7 +14,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Page"></activity>
+        <activity android:name=".Page" />
+        <activity android:name=".Latency" />
         <activity android:name=".Ping" />
         <activity android:name=".Speed" />
         <activity android:name="TraceActivity"/>
