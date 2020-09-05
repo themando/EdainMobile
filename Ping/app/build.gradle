@@ -17,10 +17,7 @@ android {
             abiFilters "armeabi-v7a", "x86"
         }
         python {
-            buildPython "/home/jj/anaconda3/bin/python"
-            pyc {
-                src false
-            }
+            buildPython "/usr/local/bin/python3"
             pip {
                 install "selenium"
             }
@@ -53,6 +50,13 @@ dependencies {
     implementation 'com.google.apis:google-api-services-pagespeedonline:v5-rev20200305-1.30.9'
     implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
     //implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.3.1'
+    implementation 'com.google.code.gson:gson:2.8.5'
+    implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'androidx.navigation:navigation-fragment:2.3.0'
+    implementation 'androidx.navigation:navigation-ui:2.3.0'
+    implementation 'com.google.android:flexbox:2.0.1'
 }

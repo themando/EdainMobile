@@ -34,6 +34,7 @@ public class MainActivity extends Activity {
         Button traceButton = (Button) findViewById(R.id.traceButton);
         Button speedButton = (Button) findViewById(R.id.speedPageButton);
         Button loadButton = (Button) findViewById(R.id.loadPageButton);
+        final Button dnsResolutionButton = (Button) findViewById(R.id.dnsResolutionButton);
 
         //Latency- Ping Tranco Top 100 page
         latencyButton.setOnClickListener(new View.OnClickListener(){
@@ -74,6 +75,14 @@ public class MainActivity extends Activity {
             }
         });
 
+        // DNS Resolution Test Page
+        dnsResolutionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent startIntent = new Intent(getApplicationContext(), FragmentHolder.class);
+                startActivity(startIntent);
+            }
+        });
         // Page Load Test page
         loadButton.setOnClickListener(new View.OnClickListener() {
 
