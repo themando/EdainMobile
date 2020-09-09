@@ -15,6 +15,7 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 
 public class TracerouteWithPing {
@@ -32,7 +33,7 @@ public class TracerouteWithPing {
 	private int ttl;
 	private int finishedTasks;
 	private String url;
-	private String[] urls;
+	private ArrayList<String> urls;
 	private String ipToPing;
 	private float elapsedTime;
 	private TraceActivity context;
@@ -62,13 +63,13 @@ public class TracerouteWithPing {
 		new ExecutePingAsyncTask(maxTtl,url).execute();
 	}
 
-	public void executeTrancoTraceroute(int maxTtl, String... urls) {
+	public void executeTrancoTraceroute(int maxTtl, ArrayList<String> urls) {
 		this.ttl = 1;
 		this.finishedTasks = 0;
 		this.urls= urls;
 
-		for(int i=0; i<urls.length;i++){
-			new ExecutePingAsyncTask(maxTtl,urls[i]).execute();
+		for(int i=0; i<urls.size();i++){
+			new ExecutePingAsyncTask(maxTtl,String.valueOf(urls.get(i))).execute();
 		}
 	}
 
