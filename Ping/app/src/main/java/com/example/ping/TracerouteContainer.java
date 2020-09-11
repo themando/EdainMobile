@@ -12,12 +12,14 @@ public class TracerouteContainer implements Serializable {
 	private String URL;
 	private String ip;
 	private boolean isSuccessful;
+	String latency;
 
-	public TracerouteContainer(String hostname, String URL, String ip, boolean isSuccessful) {
+	public TracerouteContainer(String hostname, String URL, String ip, boolean isSuccessful,String latency) {
 		this.hostname = hostname;
 		this.URL = URL;
 		this.ip = ip;
 		this.isSuccessful = isSuccessful;
+		this.latency = latency;
 	}
 
 	public String getHostname() {
@@ -42,6 +44,14 @@ public class TracerouteContainer implements Serializable {
 
 	public void setIp(String ip) {
 		this.ip = ip;
+	}
+
+	public String getLatency() {
+		return latency;
+	}
+
+	public void setLatency(String latency) {
+		this.latency = latency;
 	}
 
 	public boolean isSuccessful() {
