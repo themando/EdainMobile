@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.chaquo.python'
+apply plugin: 'com.google.gms.google-services'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -17,7 +18,7 @@ android {
             abiFilters "armeabi-v7a", "x86"
         }
         python {
-            buildPython "/usr/local/bin/python3"
+            buildPython "/home/jj/anaconda3/bin/python"
             pip {
                 install "selenium"
             }
@@ -46,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.firebase:firebase-firestore:21.6.0'
     implementation 'com.google.guava:guava:28.2-android'
     implementation 'com.google.apis:google-api-services-pagespeedonline:v5-rev20200305-1.30.9'
     implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'

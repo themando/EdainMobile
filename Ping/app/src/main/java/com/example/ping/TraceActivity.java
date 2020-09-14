@@ -1051,7 +1051,7 @@ public class TraceActivity extends Activity {
     private String fileName;
 
     private TracerouteWithPing tracerouteWithPing;
-    private final int maxTtl = 255;
+    private final int maxTtl = 999999999;
     // Storage Permissions
 
     private List<TracerouteContainer> traces;
