@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "289453036070",
+    "firebase_url": "https://edain-80d9d.firebaseio.com",
+    "project_id": "edain-80d9d",
+    "storage_bucket": "edain-80d9d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289453036070:android:b59ba4a32d0920d5024ce7",
+        "android_client_info": {
+          "package_name": "com.example.ping"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "289453036070-tdvkjsgb206ujt7u570282vesist92fk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMq-x1ENcnAGDBMw540Vv1LAdCqiAksoY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "289453036070-tdvkjsgb206ujt7u570282vesist92fk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
