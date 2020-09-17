@@ -3,10 +3,17 @@ package com.example.ping.dns_resolution.view;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.LinkProperties;
+import android.net.Network;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,11 +36,20 @@ import androidx.lifecycle.ViewModelStore;
 import com.example.ping.R;
 import com.example.ping.dns_resolution.model.DnsModel;
 import com.example.ping.dns_resolution.viewmodel.DnsViewModel;
+import com.example.ping.wifi_resolution.model.WifiDataModel;
+import com.example.ping.wifi_resolution.viewmodel.WifiViewModel;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class DnsResolution extends Fragment {
 
@@ -55,6 +71,7 @@ public class DnsResolution extends Fragment {
     DnsViewModel viewModelARecord, viewModelSOARecord, viewModelMXRecord, viewModelNSRecord, viewModelTXTRecord;
     ScrollView scrollView;
     ProgressBar progressBar;
+    String dnsServer;
 
     // val for deciding whether we want Top 10 Tranco Site Data or Data for URL
     boolean val = false;
@@ -94,7 +111,7 @@ public class DnsResolution extends Fragment {
                         try {
                             // get DNS Records
                             Task task = new Task();
-                            task.execute(url);
+                            task.execute(url).get();
 
                             Thread.sleep(600);
                             handler.post(new Runnable() {
@@ -104,7 +121,7 @@ public class DnsResolution extends Fragment {
                                     scrollView.setVisibility(View.VISIBLE);
                                 }
                             });
-                        } catch (InterruptedException e) {
+                        } catch (InterruptedException | ExecutionException e) {
                             e.printStackTrace();
                         }
                     }
@@ -186,6 +203,9 @@ public class DnsResolution extends Fragment {
 
         // ViewModels Observe the Data Changes and store the values in output Array<String>
 
+//        dnsServer = getDnsServer();
+//        System.out.println(getNetworkName());
+        getWifiData();
         // init ViewModel
         viewModelARecord.init();
 
@@ -442,5 +462,131 @@ public class DnsResolution extends Fragment {
             Top10TrancoSiteDatatoCsv();
             return true;
         }
+    }
+
+    public String getDnsServer(){
+        StringBuilder builder = new StringBuilder();
+        ConnectivityManager connectivityManager = (ConnectivityManager) this.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        Network network = connectivityManager.getActiveNetwork();
+        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+        if(info.isConnected()){
+            LinkProperties linkProperties    = connectivityManager.getLinkProperties(network);
+
+            List<InetAddress> dnsServersList = linkProperties.getDnsServers();
+            for(InetAddress element: dnsServersList){
+                builder.append(element.getHostAddress() + "\n");
+                break;
+            }
+        }
+
+        return  builder.toString();
+    }
+
+    public String getNetworkName(){
+        StringBuilder builder = new StringBuilder();
+        ConnectivityManager connectivityManager = (ConnectivityManager) this.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo.isConnected()){
+            if(networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
+                WifiManager wifiMgr = (WifiManager) this.getContext().getSystemService(Context.WIFI_SERVICE);
+                WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+                builder.append(wifiInfo.getSSID());
+            }
+            else if(networkInfo.getType() == ConnectivityManager.TYPE_MOBILE){
+                TelephonyManager manager = (TelephonyManager) this.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+                builder.append(manager.getNetworkOperatorName());
+            }
+        }
+        else{
+            builder.append("null");
+        }
+
+        return builder.toString();
+    }
+
+    public void getWifiData(){
+        WifiViewModel model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
+
+        final StringBuilder stringBuilder = new StringBuilder();
+        model.init();
+        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
+            @Override
+            public void onChanged(WifiDataModel wifiDataModel) {
+                stringBuilder.append(wifiDataModel.getOrg()).append(" ").append(wifiDataModel.getCompany().getDomain());
+                dnsServer = stringBuilder.toString();
+                System.out.println(dnsServer);
+            }
+        });
+    }
+
+    public void storeToFireStore(){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String,Object> mp = new Map<String, Object>() {
+            @Override
+            public int size() {
+                return 0;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return false;
+            }
+
+            @Override
+            public boolean containsKey(@Nullable Object key) {
+                return false;
+            }
+
+            @Override
+            public boolean containsValue(@Nullable Object value) {
+                return false;
+            }
+
+            @Nullable
+            @Override
+            public Object get(@Nullable Object key) {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public Object put(String key, Object value) {
+                return null;
+            }
+
+            @Nullable
+            @Override
+            public Object remove(@Nullable Object key) {
+                return null;
+            }
+
+            @Override
+            public void putAll(@NonNull Map<? extends String, ?> m) {
+
+            }
+
+            @Override
+            public void clear() {
+
+            }
+
+            @NonNull
+            @Override
+            public Set<String> keySet() {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            public Collection<Object> values() {
+                return null;
+            }
+
+            @NonNull
+            @Override
+            public Set<Entry<String, Object>> entrySet() {
+                return null;
+            }
+        };
     }
 }
