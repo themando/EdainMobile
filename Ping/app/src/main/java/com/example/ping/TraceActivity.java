@@ -64,7 +64,6 @@ public class TraceActivity extends Activity {
             "www.doubleclick.net",
             "www.taobao.com",
             "www.adobe.com",
-            "www.youtu.be",
             "www.pinterest.com",
             "www.360.cn",
             "www.vimeo.com",
@@ -76,7 +75,6 @@ public class TraceActivity extends Activity {
             "www.bing.com",
             "www.sina.com.cn",
             "www.zoom.us",
-            "www.goo.gl",
             "www.github.com",
             "www.googleusercontent.com",
             "www.blogspot.com",
@@ -97,7 +95,6 @@ public class TraceActivity extends Activity {
             "www.flickr.com",
             "www.okezone.com",
             "www.whatsapp.com",
-            "www.ytimg.com",
             "www.gravatar.com",
             "www.dropbox.com",
             "www.soundcloud.com",
@@ -108,7 +105,6 @@ public class TraceActivity extends Activity {
             "www.cnn.com",
             "www.csdn.net",
             "www.apache.org",
-            "www.t.co",
             "www.ebay.com",
             "www.yahoo.co.jp",
             "www.twitch.tv",
@@ -126,7 +122,6 @@ public class TraceActivity extends Activity {
             "www.forbes.com",
             "www.bbc.co.uk",
             "www.google.com.hk",
-            "www.panda.tv",
             "www.naver.com",
             "www.paypal.com",
             "www.googleadservices.com",
@@ -134,7 +129,6 @@ public class TraceActivity extends Activity {
             "www.archive.org",
             "www.bbc.com",
             "www.cloudflare.com",
-            "www.googlesyndication.com",
             "www.github.io",
             "www.stackoverflow.com",
             "www.yandex.ru",
@@ -186,7 +180,6 @@ public class TraceActivity extends Activity {
             "www.cnet.com",
             "www.businessinsider.com",
             "www.google.co.jp",
-            "www.google.cn",
             "www.opera.com",
             "www.sciencedirect.com",
             "www.youtube-nocookie.com",
@@ -262,7 +255,6 @@ public class TraceActivity extends Activity {
             "www.un.org",
             "www.grid.id",
             "www.haosou.com",
-            "www.t.me",
             "www.pixnet.net",
             "www.freepik.com",
             "www.akamai.net",
@@ -354,7 +346,6 @@ public class TraceActivity extends Activity {
             "www.grammarly.com",
             "www.webmd.com",
             "www.amzn.to",
-            "www.6.cn",
             "www.duckduckgo.com",
             "www.onlinesbi.com",
             "www.quora.com",
@@ -1108,20 +1099,19 @@ public class TraceActivity extends Activity {
             @SuppressLint("SetTextI18n")
             @Override
             public void onClick(View v) {
-                if (editTrancoNum.getText().length() == 0) {
+				Toast.makeText(TraceActivity.this, "Running Traceroutes", Toast.LENGTH_SHORT).show();
+				editTextPing.setText("TRANCO " + editTrancoNum.getText());
+                if ((editTrancoNum.getText().length() == 0)) {
                     Toast.makeText(TraceActivity.this, "Please Enter a Number", Toast.LENGTH_SHORT).show();
                 } else {
                     if (editTextFile.getText().length() != 0) {
                         fileName = String.valueOf(editTextFile.getText());
                     }
+					ArrayList<String> sites = new ArrayList<>();
+					sites.addAll(Arrays.asList(TRANCO_TOP_10).subList(0, Integer.parseInt(String.valueOf(editTrancoNum.getText()))));
                     Toast.makeText(TraceActivity.this, "Trace routes will be saved to trace_ping.csv", Toast.LENGTH_SHORT).show();
                     traces.clear();
                     traceListAdapter.notifyDataSetChanged();
-                    startProgressBar();
-                    editTextPing.setFocusable(false);
-                    editTextPing.setText("TRANCO " + editTrancoNum.getText());
-                    ArrayList<String> sites = new ArrayList<>();
-                    sites.addAll(Arrays.asList(TRANCO_TOP_10).subList(0, Integer.parseInt(String.valueOf(editTrancoNum.getText()))));
                     tracerouteWithPing.executeTrancoTraceroute(maxTtl, sites);
                 }
             }

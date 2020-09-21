@@ -18,14 +18,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -35,11 +30,9 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 
 
@@ -86,34 +79,8 @@ public class TracerouteWithPing {
         this.ttl = 1;
         this.finishedTasks = 0;
         this.url = url;
-
-        saveData();
-        InetAddress ip_host;
-        String url_host = "https://" + url.trim() + "/";
-        try {
-            ip_host = InetAddress.getByName(new URL(url_host).getHost());
-        } catch (UnknownHostException | MalformedURLException e) {
-            ip_host = null;
-        }
-        String resolved_ip = String.valueOf(ip_host);
-        Map<String, Object> m = new HashMap<>();
-        m.put("resolved_ip", resolved_ip);
-
-        db.collection("traceroute").document(String.valueOf(doc_ser))
-                .collection("metric").document(url).set(m)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("FIRESTORE", "Error writing document", e);
-                    }
-                });
-
+        context.startProgressBar();
+        new SaveAsyncTask(url);
         new ExecutePingAsyncTask(maxTtl, url).execute();
     }
 
@@ -121,12 +88,28 @@ public class TracerouteWithPing {
         this.ttl = 1;
         this.finishedTasks = 0;
         this.urls = urls;
+        context.startProgressBar();
 
-        saveData();
-
+        new SaveTrancoAsyncTask(urls);
         for (int i = 0; i < urls.size(); i++) {
-            String url_host = "https://" + urls.get(i).trim() + "/";
+            new ExecutePingAsyncTask(maxTtl, String.valueOf(urls.get(i))).execute();
+        }
+    }
+
+
+    private class SaveAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        String url;
+
+        public SaveAsyncTask(String url) {
+            this.url = url;
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            saveData();
             InetAddress ip_host;
+            String url_host = "https://" + url.trim() + "/";
             try {
                 ip_host = InetAddress.getByName(new URL(url_host).getHost());
             } catch (UnknownHostException | MalformedURLException e) {
@@ -135,8 +118,9 @@ public class TracerouteWithPing {
             String resolved_ip = String.valueOf(ip_host);
             Map<String, Object> m = new HashMap<>();
             m.put("resolved_ip", resolved_ip);
+
             db.collection("traceroute").document(String.valueOf(doc_ser))
-                    .collection("metric").document(urls.get(i)).set(m)
+                    .collection("metric").document(url).set(m)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
@@ -149,10 +133,55 @@ public class TracerouteWithPing {
                             Log.w("FIRESTORE", "Error writing document", e);
                         }
                     });
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result) {
+        }
+    }
+
+
+    private class SaveTrancoAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        ArrayList<String> url_list;
+
+        public SaveTrancoAsyncTask(ArrayList<String> url_list) {
+            this.url_list = url_list;
         }
 
-        for (int i = 0; i < urls.size(); i++) {
-            new ExecutePingAsyncTask(maxTtl, String.valueOf(urls.get(i))).execute();
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            saveData();
+            for (int i = 0; i < urls.size(); i++) {
+                String url_host = "https://" + urls.get(i).trim() + "/";
+                InetAddress ip_host;
+                try {
+                    ip_host = InetAddress.getByName(new URL(url_host).getHost());
+                } catch (UnknownHostException | MalformedURLException e) {
+                    ip_host = null;
+                }
+                String resolved_ip = String.valueOf(ip_host);
+                Map<String, Object> m = new HashMap<>();
+                m.put("resolved_ip", resolved_ip);
+                db.collection("traceroute").document(String.valueOf(doc_ser))
+                        .collection("metric").document(urls.get(i)).set(m)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("FIRESTORE", "Error writing document", e);
+                            }
+                        });
+            }
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result) {
         }
     }
 
@@ -277,6 +306,20 @@ public class TracerouteWithPing {
         }
         return "NN";
     }
+
+//    public String getWifiData(){
+//        WifiViewModel model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
+//
+//        final StringBuilder stringBuilder = new StringBuilder();
+//        model.init();
+//        model.fetchLiveData();
+//        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
+//            public String onChanged(WifiDataModel wifiDataModel) {
+//                stringBuilder.append(wifiDataModel.getOrg()).append(" ").append(wifiDataModel.getCompany().getDomain());
+//                return stringBuilder.toString();
+//            }
+//        });
+//    }
 
     private void saveData() {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yy | hh:mm:ss");
