@@ -4,12 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
-import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,26 +25,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStore;
 
 import com.example.ping.R;
-import com.example.ping.dns_resolution.model.DnsModel;
+import com.example.ping.Wifi_Network.viewmodel.WifiViewModel;
 import com.example.ping.dns_resolution.viewmodel.DnsViewModel;
-import com.example.ping.wifi_resolution.model.WifiDataModel;
-import com.example.ping.wifi_resolution.viewmodel.WifiViewModel;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class DnsResolution extends Fragment {
@@ -61,17 +57,18 @@ public class DnsResolution extends Fragment {
     static final String FILE_TXT_RECORDS = "txt_record.csv";
     ArrayList<String>[] output = new ArrayList[5];
 
-    // Top 10 Tranco Sites
-    String[] top10TrancoSites = new String[]{"google.com", "facebook.com", "youtube.com", "twitter.com", "microsoft.com",
-            "tmall.com", "instagram.com", "linkedin.com", "netflix.com", "windowsupdate.com"};
+    // Top 1000 Tranco Sites
+    String[] top1000TrancoSites = new String[]
+            {"google.com", "facebook.com", "youtube.com", "microsoft.com", "twitter.com", "tmall.com", "instagram.com", "netflix.com", "linkedin.com", "baidu.com", "windowsupdate.com", "qq.com", "wikipedia.org", "apple.com", "live.com", "sohu.com", "yahoo.com", "amazon.com", "doubleclick.net", "googletagmanager.com", "taobao.com", "adobe.com", "pinterest.com", "youtu.be", "360.cn", "vimeo.com", "jd.com", "reddit.com", "office.com", "wordpress.com", "weibo.com", "bing.com", "zoom.us", "sina.com.cn", "goo.gl", "github.com", "microsoftonline.com", "googleusercontent.com", "amazonaws.com", "bit.ly", "blogspot.com", "vk.com", "wordpress.org", "xinhuanet.com", "fbcdn.net", "tumblr.com", "mozilla.org", "godaddy.com", "msn.com", "google-analytics.com", "nytimes.com", "skype.com", "flickr.com", "okezone.com", "whatsapp.com", "gravatar.com", "soundcloud.com", "dropbox.com", "ytimg.com", "europa.eu", "alipay.com", "myshopify.com", "nih.gov", "csdn.net", "yahoo.co.jp", "cnn.com", "t.co", "ebay.com", "apache.org", "twitch.tv", "office365.com", "w3.org", "macromedia.com", "theguardian.com", "googlevideo.com", "medium.com", "spotify.com", "google.com.hk", "bongacams.com", "naver.com", "imdb.com", "sourceforge.net", "bbc.co.uk", "forbes.com", "zhanqi.tv", "paypal.com", "panda.tv", "aliexpress.com", "archive.org", "cloudflare.com", "bbc.com", "googleadservices.com", "googlesyndication.com", "github.io", "google.co.in", "yandex.ru", "amazon.in", "weebly.com", "stackoverflow.com", "china.com.cn", "digicert.com", "virginmedia.com", "tianya.cn", "amazon.co.jp", "creativecommons.org", "who.int", "wixsite.com", "issuu.com", "windows.net", "washingtonpost.com", "imgur.com", "tribunnews.com", "etsy.com", "livejasmin.com", "ggpht.com", "chaturbate.com", "oracle.com", "slideshare.net", "mail.ru", "amazon.co.uk", "reuters.com", "php.net", "gvt2.com", "wix.com", "cdc.gov", "wsj.com", "icloud.com", "app-measurement.com", "akadns.net", "akamaiedge.net", "pornhub.com", "google.de", "tinyurl.com", "huanqiu.com", "wikimedia.org", "1688.com", "google.cn", "alibaba.com", "aparat.com", "wp.com", "bloomberg.com", "google.co.jp", "businessinsider.com", "instructure.com", "cnet.com", "yy.com", "sciencedirect.com", "sogou.com", "opera.com", "youtube-nocookie.com", "163.com", "google.com.br", "harvard.edu", "gnu.org", "ok.ru", "mit.edu", "outlook.com", "dailymail.co.uk", "so.com", "ibm.com", "booking.com", "espn.com", "17ok.com", "amazon.de", "researchgate.net", "go.com", "stanford.edu", "forms.gle", "samsung.com", "google.co.uk", "bitly.com", "rakuten.co.jp", "list-manage.com", "hp.com", "blogger.com", "windows.com", "wiley.com", "telegraph.co.uk", "aol.com", "usatoday.com", "facebook.net", "msedge.net", "ntp.org", "jrj.com.cn", "mama.cn", "fb.com", "cnbc.com", "surveymonkey.com", "nginx.org", "cpanel.net", "fandom.com", "eventbrite.com", "kompas.com", "indiatimes.com", "myspace.com", "nasa.gov", "dailymotion.com", "canva.com", "huffingtonpost.com", "behance.net", "nature.com", "google.fr", "google.es", "cloudfront.net", "aliyun.com", "apple-dns.net", "youku.com", "xvideos.com", "ettoday.net", "office.net", "hao123.com", "gvt1.com", "addthis.com", "nflxso.net", "udemy.com", "time.com", "pixnet.net", "walmart.com", "npr.org", "indeed.com", "un.org", "roblox.com", "hicloud.com", "google.it", "freepik.com", "springer.com", "t.me", "foxnews.com", "google.ru", "babytree.com", "wendyssubway.com", "www.gov.uk", "ted.com", "cpanel.com", "grid.id", "sharepoint.com", "ca.gov", "flipkart.com", "aaplimg.com", "wired.com", "bilibili.com", "mysql.com", "akamai.net", "cnblogs.com", "yelp.com", "nginx.com", "hugedomains.com", "scribd.com", "detik.com", "salesforce.com", "scorecardresearch.com", "doi.org", "thestartmagazine.com", "zendesk.com", "opendns.com", "goodreads.com", "force.com", "soso.com", "adnxs.com", "gmail.com", "debian.org", "independent.co.uk", "intel.com", "wikihow.com", "free.fr", "tripadvisor.com", "shutterstock.com", "wetransfer.com", "themeforest.net", "beian.gov.cn", "akamaized.net", "google.ca", "android.com", "techcrunch.com", "squarespace.com", "amazon-adsystem.com", "daum.net", "google.com.sg", "mailchimp.com", "speedtest.net", "berkeley.edu", "mediafire.com", "stackexchange.com", "googletagservices.com", "msftncsi.com", "chase.com", "addtoany.com", "okta.com", "livejournal.com", "line.me", "unsplash.com", "zillow.com", "tokopedia.com", "taboola.com", "latimes.com", "craigslist.org", "weather.com", "ikea.com", "tiktok.com", "statcounter.com", "google.com.tw", "crashlytics.com", "grammarly.com", "healthline.com", "zoho.com", "xhamster.com", "twimg.com", "duckduckgo.com", "webmd.com", "onlinesbi.com", "quora.com", "gome.com.cn", "amzn.to", "cisco.com", "kickstarter.com", "theverge.com", "adsrvr.org", "webex.com", "6.cn", "jimdo.com", "digg.com", "nationalgeographic.com", "haosou.com", "deviantart.com", "akamaihd.net", "ft.com", "tradingview.com", "amazon.ca", "ietf.org", "sitemaps.org", "cornell.edu", "pixabay.com", "w3schools.com", "loc.gov", "theatlantic.com", "zhihu.com", "buzzfeed.com", "shopify.com", "washington.edu", "google.com.mx", "appsflyer.com", "dell.com", "youm7.com", "giphy.com", "eastday.com", "cbsnews.com", "about.com", "rubiconproject.com", "arnebrachhold.de", "2mdn.net", "slack.com", "wa.me", "telegram.org", "tandfonline.com", "akismet.com", "liputan6.com", "stumbleupon.com", "savefrom.net", "google.com.vn", "criteo.com", "academia.edu", "coursera.org", "symantec.com", "cambridge.org", "marriott.com", "rednet.cn", "marketwatch.com", "digikala.com", "disqus.com", "whatsapp.net", "padlet.com", "investopedia.com", "launchpad.net", "primevideo.com", "typepad.com", "bestbuy.com", "pubmatic.com", "iqiyi.com", "demdex.net", "uol.com.br", "box.com", "princeton.edu", "usnews.com", "avito.ru", "tiktokv.com", "google.com.tr", "azureedge.net", "tiktokcdn.com", "ampproject.org", "ilovepdf.com", "discord.com", "pki.goog", "huffpost.com", "feedburner.com", "msftconnecttest.com", "fc2.com", "mailchi.mp", "webs.com", "prnewswire.com", "advertising.com", "mashable.com", "hola.org", "economist.com", "pinimg.com", "evernote.com", "fda.gov", "alicdn.com", "noaa.gov", "bandcamp.com", "investing.com", "steampowered.com", "steamcommunity.com", "globo.com", "sciencemag.org", "homedepot.com", "worldometers.info", "airbnb.com", "hubspot.com", "bet9ja.com", "change.org", "nbcnews.com", "avast.com", "wellsfargo.com", "youronlinechoices.com", "ebay.de", "moatads.com", "teamviewer.com", "pbs.org", "plesk.com", "nflximg.com", "trello.com", "casalemedia.com", "arcgis.com", "whitehouse.gov", "mozilla.com", "usda.gov", "lazada.sg", "constantcontact.com", "jquery.com", "accuweather.com", "hulu.com", "target.com", "oup.com", "columbia.edu", "eepurl.com", "51.la", "engadget.com", "tistory.com", "umich.edu", "ebay.co.uk", "nypost.com", "outbrain.com", "state.gov", "aboutads.info", "unesco.org", "openx.net", "rt.com", "amazon.fr", "ups.com", "tripod.com", "edgekey.net", "setn.com", "google.co.th", "rlcdn.com", "huawei.com", "breitbart.com", "google.com.sa", "vice.com", "patreon.com", "psu.edu", "varzesh3.com", "geocities.com", "zdnet.com", "gofundme.com", "sagepub.com", "yale.edu", "bukalapak.com", "hbr.org", "meetup.com", "epa.gov", "nvidia.com", "guardian.co.uk", "google.com.ar", "abc.net.au", "trustpilot.com", "mayoclinic.org", "sun.com", "britannica.com", "google.com.eg", "metropoles.com", "allaboutcookies.org", "patch.com", "statista.com", "cbc.ca", "upenn.edu", "smallpdf.com", "bidswitch.net", "nike.com", "aliexpress.ru", "gotowebinar.com", "sciencedaily.com", "elsevier.com", "fiverr.com", "redhat.com", "photobucket.com", "networkadvertising.org", "google.pl", "vox.com", "sindonews.com", "getpocket.com", "google.co.id", "amazon.it", "amazon.es", "quizlet.com", "momoshop.com.tw", "ask.com", "www.gov.cn", "business.site", "irs.gov", "dribbble.com", "suara.com", "redd.it", "usps.com", "wayfair.com", "vkontakte.ru", "hdfcbank.com", "xnxx.com", "hootsuite.com", "worldbank.org", "gizmodo.com", "newyorker.com", "psychologytoday.com", "example.com", "everesttech.net", "talktalk.co.uk", "live.net", "google.com.au", "chinadaily.com.cn", "iso.org", "ieee.org", "fedex.com", "namnak.com", "fastcompany.com", "businesswire.com", "merriam-webster.com", "51sole.com", "khanacademy.org", "inc.com", "mathtag.com", "umn.edu", "oreilly.com", "ox.ac.uk", "wpengine.com", "dw.com", "blackboard.com", "bluekai.com", "softonic.com", "amazon.cn", "fortune.com", "cnzz.com", "cdninstagram.com", "wisc.edu", "chouftv.ma", "ltn.com.tw", "messenger.com", "snapchat.com", "letsencrypt.org", "ndtv.com", "wikia.com", "plos.org", "azure.com", "att.com", "yimg.com", "typeform.com", "entrepreneur.com", "wiktionary.org", "quantserve.com", "jhu.edu", "nist.gov", "agkn.com", "uci.edu", "jianshu.com", "us.com", "iqoption.com", "ucla.edu", "gmw.cn", "scientificamerican.com", "chicagotribune.com", "ameblo.jp", "theconversation.com", "pikiran-rakyat.com", "elegantthemes.com", "deloitte.com", "utexas.edu", "feedly.com", "playstation.com", "heavy.com", "spiegel.de", "sfgate.com", "python.org", "comodoca.com", "rambler.ru", "cmu.edu", "asos.com", "zaloapp.com", "adsafeprotected.com", "deepl.com", "canada.ca", "y2mate.com", "cam.ac.uk", "slate.com", "epicgames.com", "realtor.com", "uk.com", "krxd.net", "newrelic.com", "ubuntu.com", "pexels.com", "newsweek.com", "360.com", "arxiv.org", "indiegogo.com", "lenovo.com", "discordapp.com", "elpais.com", "xfinity.com", "zerodha.com", "qualtrics.com", "ed.gov", "telewebion.com", "intuit.com", "bmj.com", "timeanddate.com", "verisign.com", "eikegolehem.com", "hotstar.com", "manoramaonline.com", "hilton.com", "gosuslugi.ru", "nps.gov", "uchicago.edu", "over-blog.com", "afternic.com", "adform.net", "bootstrapcdn.com", "hotjar.com", "oecd.org", "bbb.org", "mirror.co.uk", "asus.com", "aboutcookies.org", "howstuffworks.com", "zol.com.cn", "fb.me", "biomedcentral.com", "uiuc.edu", "qz.com", "weforum.org", "shaparak.ir", "arstechnica.com", "nicovideo.jp", "mgid.com", "tencent.com", "sfx.ms", "byteoversea.com", "thesun.co.uk", "sberbank.ru", "purdue.edu", "criteo.net", "bet365.com", "medicalnewstoday.com", "cbslocal.com", "chron.com", "pcmag.com", "turn.com", "visualstudio.com", "ladbible.com", "unity3d.com", "tapad.com", "norton.com", "parallels.com", "mercadolivre.com.br", "nba.com", "douban.com", "altervista.org", "icicibank.com", "glassdoor.com", "op.gg", "merdeka.com", "appcenter.ms", "bizjournals.com", "capitalone.com", "ny.gov", "kakao.com", "dictionary.com", "gamepedia.com", "ign.com", "kumparan.com", "idntimes.com", "toutiao.com", "apa.org", "crwdcntrl.net", "americanexpress.com", "si.edu", "ftc.gov", "techradar.com", "autodesk.com", "blogspot.co.uk", "thesaurus.com", "mercadolibre.com.ar", "fao.org", "gstatic.com", "digitaltrends.com", "zend.com", "mlb.com", "geeksforgeeks.org", "namu.wiki", "chess.com", "netscape.com", "bankofamerica.com", "umeng.com", "fbsbx.com", "thepiratebay.org", "politico.com", "cctv.com", "patria.org.ve", "nyu.edu", "sahibinden.com", "icio.us", "news.com.au", "fastly.net", "smh.com.au", "istockphoto.com", "orange.fr", "abs-cbn.com", "ow.ly", "reverso.net", "nydailynews.com", "sectigo.com", "inquirer.net", "usc.edu", "trafficmanager.net", "openstreetmap.org", "cnnic.cn", "appspot.com", "bitnami.com", "spotxchange.com", "exelator.com", "barnesandnoble.com", "genius.com", "google.co.kr", "telegram.me", "ning.com", "joomla.org", "moneycontrol.com", "upwork.com", "prezi.com", "livescience.com", "fontawesome.com", "dropcatch.com", "uber.com", "house.gov", "xing.com", "pnas.org", "sakura.ne.jp", "mercadolibre.com.mx", "googleblog.com", "dedecms.com", "allegro.pl", "duke.edu", "google.gr", "foursquare.com", "instructables.com", "3lift.com", "apnews.com", "ebay-kleinanzeigen.de", "venturebeat.com", "zalo.me", "kapanlagi.com", "census.gov", "marca.com", "aliyuncs.com", "enable-javascript.com", "acs.org", "vmware.com", "variety.com", "lifehacker.com", "verizon.com", "jiameng.com", "brilio.net", "themeisle.com", "umd.edu", "chinanews.com", "youdao.com", "jstor.org", "fidelity.com", "ria.ru", "usgs.gov", "angelfire.com", "madrasati.sa", "jpnn.com", "ea.com", "mckinsey.com", "pewresearch.org", "secureserver.net", "miit.gov.cn", "earthlink.net", "google.com.ua", "ufl.edu", "imageshack.us", "teads.tv", "adp.com", "express.co.uk", "aljazeera.com", "g.page", "msu.edu", "proiezionidiborsa.it", "mookie1.com", "fast.com", "schoology.com", "thefreedictionary.com", "about.me", "ucsd.edu", "81.cn", "urbandictionary.com", "jotform.com", "lijit.com", "mi.com", "wildberries.ru", "linktr.ee", "senate.gov", "duolingo.com", "doubleverify.com", "thehill.com", "adjust.com", "hm.com", "alexa.com", "postgresql.org", "mercari.com", "isnssdk.com", "jsdelivr.net", "branch.io", "thedailybeast.com", "mixpanel.com", "9gag.com", "thelancet.com", "unc.edu", "rollingstone.com", "gartner.com", "northwestern.edu", "atlassian.net", "gmx.net", "ebc.net.tw", "hatena.ne.jp", "ssl-images-amazon.com", "ouedkniss.com", "redbubble.com", "nikkei.com", "kaspersky.com", "hurriyet.com.tr", "discord.gg", "in.gr", "hespress.com", "illinois.edu", "focus.cn", "tutorialspoint.com", "shopee.co.id", "bbcollab.com", "leboncoin.fr", "wattpad.com", "namecheap.com", "vnexpress.net", "proofpoint.com", "stripe.com", "crunchyroll.com", "xiaomi.com", "sky.com", "chegg.com", "utoronto.ca", "xbox.com", "lemonde.fr", "slashdot.org", "thetimes.co.uk", "theglobeandmail.com", "bls.gov", "lowes.com", "gamespot.com", "ensonhaber.com", "nfl.com", "goo.ne.jp", "ebay.com.au", "xe.com", "java.com", "apachefriends.org", "albawabhnews.com", "withgoogle.com", "asu.edu", "smartadserver.com", "jamanetwork.com", "google.nl", "edgesuite.net", "scmp.com", "jiathis.com", "privacyshield.gov", "yts.mx", "gismeteo.ru", "media.net", "gitlab.com", "hhs.gov", "sonhoo.com", "newscientist.com", "itu.int", "gsmarena.com", "wp.me", "repubblica.it", "today.com", "trendyol.com", "siemens.com", "google.ro", "atlassian.com", "fool.com", "e2ro.com", "elbalad.news", "creativecdn.com", "qoo10.sg", "arizona.edu", "wunderground.com", "zippyshare.com", "nhk.or.jp", "wufoo.com", "automattic.com", "onenote.net", "getbootstrap.com", "sec.gov", "td.com", "dotomi.com", "divar.ir", "hatenablog.com", "w.org", "globalsign.com", "1rx.io", "boston.com", "hollywoodreporter.com", "oppomobile.com", "moodle.org", "mitre.org", "people.com", "docker.com", "dcard.tw", "shopee.vn", "mzstatic.com", "livestream.com", "w55c.net", "mixcloud.com", "uspto.gov", "m.me", "mheducation.com", "history.com", "mapquest.com", "openssl.org", "dhl.com", "indiamart.com", "nejm.org", "googleapis.com", "adsymptotic.com", "drupal.org", "rediff.com", "newegg.com", "ustream.tv", "imrworldwide.com", "emofid.com", "colorado.edu", "dbs.com.sg", "hindustantimes.com", "efu.com.cn", "techtarget.com", "youporn.com", "freebsd.org", "eastmoney.com", "center4family.com", "zemanta.com", "biblegateway.com", "www.nhs.uk", "google.be", "uptodown.com", "disneyplus.com", "naver.jp", "mega.nz", "icann.org", "a1sewcraft.com", "web.de", "azurewebsites.net", "metro.co.uk", "eff.org", "edx.org", "woocommerce.com", "howtogeek.com", "hexun.com", "haofang.net", "infobae.com"};
 
-    Button pingButton, addButton, clearButton, exportButton, trancoButton;
-    EditText editText;
+    Button pingButton, addButton, clearButton, exportButton, trancoButton, firestoreButton;
+    EditText editText, editText1;
     TextView aRecord, soaRecord, mxRecord, nsRecord, txtRecord;
     DnsViewModel viewModelARecord, viewModelSOARecord, viewModelMXRecord, viewModelNSRecord, viewModelTXTRecord;
     ScrollView scrollView;
     ProgressBar progressBar;
-    String dnsServer;
+    String dnsServer = "Time Limit Exceeded to get Wifi Network from API";
+    WifiViewModel model;
 
     // val for deciding whether we want Top 10 Tranco Site Data or Data for URL
     boolean val = false;
@@ -83,6 +80,7 @@ public class DnsResolution extends Fragment {
         scrollView = view.findViewById(R.id.scrollView);
         progressBar = view.findViewById(R.id.progress_circular);
         editText = view.findViewById(R.id.edit_text);
+        editText1 = view.findViewById(R.id.number_text);
         aRecord = view.findViewById(R.id.aRecord);
         soaRecord = view.findViewById(R.id.soaRecord);
         mxRecord = view.findViewById(R.id.mxRecord);
@@ -93,99 +91,95 @@ public class DnsResolution extends Fragment {
         exportButton = view.findViewById(R.id.dnsExportButton);
         clearButton = view.findViewById(R.id.dnsClearButton);
         trancoButton = view.findViewById(R.id.dnsTrancoButton);
+        firestoreButton = view.findViewById(R.id.firestoreButton);
 
         // CLick Ping Button
-        pingButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                val = false;
-                // launch Progress Bar while retrieving Data
-                scrollView.setVisibility(View.INVISIBLE);
-                progressBar.setVisibility(View.VISIBLE);
-                final String url = editText.getText().toString();
+        pingButton.setOnClickListener(v -> {
+            val = false;
+            // launch Progress Bar while retrieving Data
+            scrollView.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            final String url = editText.getText().toString();
 
-                final Handler handler = new Handler();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            // get DNS Records
-                            Task task = new Task();
-                            task.execute(url).get();
+            final Handler handler = new Handler();
+            new Thread(() -> {
+                try {
+                    // get DNS Records
+                    Task1 task = new Task1();
+                    task.execute(url).get();
 
-                            Thread.sleep(600);
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.setVisibility(View.INVISIBLE);
-                                    scrollView.setVisibility(View.VISIBLE);
-                                }
-                            });
-                        } catch (InterruptedException | ExecutionException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-            }
+                    Thread.sleep(600);
+                    handler.post(() -> {
+                        progressBar.setVisibility(View.INVISIBLE);
+                        scrollView.setVisibility(View.VISIBLE);
+                    });
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         });
 
         // Click Add Button
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                writeCsv(output);
-            }
-        });
+        addButton.setOnClickListener(v -> writeCsv(output));
 
         // Click Export Button
-        exportButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                exportCsv();
-            }
-        });
+        exportButton.setOnClickListener(v -> exportCsv());
 
         // Click Clear Button
-        clearButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteCsv();
-            }
-        });
+        clearButton.setOnClickListener(v -> deleteCsv());
 
         // Click Tranco Button
-        trancoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                val = true;
-                // launch Progress Bar while retrieving Data
-                scrollView.setVisibility(View.INVISIBLE);
-                progressBar.setVisibility(View.VISIBLE);
-                final Handler handler = new Handler();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
+        trancoButton.setOnClickListener(v -> {
+            val = true;
+            // launch Progress Bar while retrieving Data
+            scrollView.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            final int num = Integer.parseInt(editText1.getText().toString());
+            final Handler handler = new Handler();
+            new Thread(() -> {
 
-                        // get DNS Records for Top 10 Tranco Sites
-                        BackGroundTask task = new BackGroundTask();
-                        task.execute();
+                // get DNS Records for Top 10 Tranco Sites
+                BackGroundTask task = new BackGroundTask();
+                task.execute(num);
 
-                        try {
-                            Thread.sleep(10000);
-                            exportCsv();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                progressBar.setVisibility(View.INVISIBLE);
-                                Toast.makeText(getContext(), "DNS Data for Top 10 Tranco Sites", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                try {
+                    Thread.sleep((num * 1000));
+                    exportCsv();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                handler.post(() -> {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    Toast.makeText(getContext(), "DNS Data for Top 10 Tranco Sites", Toast.LENGTH_SHORT).show();
+                });
+            }).start();
+        });
+
+        firestoreButton.setOnClickListener(v -> {
+            scrollView.setVisibility(View.INVISIBLE);
+            progressBar.setVisibility(View.VISIBLE);
+            final int num = Integer.parseInt(editText1.getText().toString());
+            final Handler handler = new Handler();
+            new Thread(() -> {
+
+                // get DNS Records for Top 10 Tranco Sites
+                BackGroundTask1 task = new BackGroundTask1();
+                task.execute();
+                try {
+                    Thread.sleep(2000);
+                    try {
+                        storeToFireStore(num);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                }).start();
-            }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                handler.post(() -> {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    Toast.makeText(getContext(), "DNS Data for Top 10 Tranco Sites", Toast.LENGTH_SHORT).show();
+                });
+            }).start();
         });
         return view;
     }
@@ -205,109 +199,97 @@ public class DnsResolution extends Fragment {
 
 //        dnsServer = getDnsServer();
 //        System.out.println(getNetworkName());
-        getWifiData();
+        model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
+        model.init();
+        model.getLiveData().observe(this, wifiDataModel -> dnsServer = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain());
+
         // init ViewModel
         viewModelARecord.init();
 
-        viewModelARecord.getData().observe(this, new Observer<DnsModel>() {
-            @Override
-            public void onChanged(DnsModel dnsModel) {
+        viewModelARecord.getData().observe(this, dnsModel -> {
 
-                // init DnsRecordFormatter
-                DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter();
+            // init DnsRecordFormatter
+            DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(this.getContext());
 
-                // Checking if we have Click on Ping Button
-                if (!val) {
-                    // Setting the Record TexView when we click on PING
-                    aRecord.setText(dnsRecordFetcher.aRecord(dnsModel));
-                }
-
-                // Storing the formatted data in output Array<String>
-                output[0] = dnsRecordFetcher.exportARecord(dnsModel);
+            // Checking if we have Click on Ping Button
+            if (!val) {
+                // Setting the Record TexView when we click on PING
+                aRecord.setText(dnsRecordFetcher.aRecord(dnsModel));
             }
+
+            // Storing the formatted data in output Array<String>
+            output[0] = dnsRecordFetcher.exportARecord(dnsModel);
         });
 
         // init ViewModel
         viewModelSOARecord.init();
 
-        viewModelSOARecord.getData().observe(this, new Observer<DnsModel>() {
-            @Override
-            public void onChanged(DnsModel dnsModel) {
+        viewModelSOARecord.getData().observe(this, dnsModel -> {
 
-                // init DnsRecordFormatter
-                DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter();
+            // init DnsRecordFormatter
+            DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(this.getContext());
 
-                // Checking if we have Click on Ping Button
-                if (!val) {
-                    // Setting the Record TexView when we click on PING
-                    soaRecord.setText(dnsRecordFetcher.soaRecord(dnsModel));
-                }
-
-                // Storing the formatted data in output Array<String>
-                output[1] = dnsRecordFetcher.exportSOARecord(dnsModel);
+            // Checking if we have Click on Ping Button
+            if (!val) {
+                // Setting the Record TexView when we click on PING
+                soaRecord.setText(dnsRecordFetcher.soaRecord(dnsModel));
             }
+
+            // Storing the formatted data in output Array<String>
+            output[1] = dnsRecordFetcher.exportSOARecord(dnsModel);
         });
 
         // init ViewModel
         viewModelMXRecord.init();
 
-        viewModelMXRecord.getData().observe(this, new Observer<DnsModel>() {
-            @Override
-            public void onChanged(DnsModel dnsModel) {
+        viewModelMXRecord.getData().observe(this, dnsModel -> {
 
-                // init DnsRecordFormatter
-                DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter();
+            // init DnsRecordFormatter
+            DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(this.getContext());
 
-                // Checking if we have Click on Ping Button
-                if (!val) {
-                    // Setting the Record TexView when we click on PING
-                    mxRecord.setText(dnsRecordFetcher.mxRecord(dnsModel));
-                }
-
-                // Storing the formatted data in output Array<String>
-                output[2] = dnsRecordFetcher.exportMXRecord(dnsModel);
+            // Checking if we have Click on Ping Button
+            if (!val) {
+                // Setting the Record TexView when we click on PING
+                mxRecord.setText(dnsRecordFetcher.mxRecord(dnsModel));
             }
+
+            // Storing the formatted data in output Array<String>
+            output[2] = dnsRecordFetcher.exportMXRecord(dnsModel);
         });
 
         // init ViewModel
         viewModelNSRecord.init();
 
-        viewModelNSRecord.getData().observe(this, new Observer<DnsModel>() {
-            @Override
-            public void onChanged(DnsModel dnsModel) {
+        viewModelNSRecord.getData().observe(this, dnsModel -> {
 
-                // init DnsRecordFormatter
-                DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter();
+            // init DnsRecordFormatter
+            DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(this.getContext());
 
-                // Checking if we have Click on Ping Button
-                if (!val) {
-                    // Setting the Record TexView when we click on PING
-                    nsRecord.setText(dnsRecordFetcher.nsRecord(dnsModel));
-                }
-
-                // Storing the formatted data in output Array<String>
-                output[3] = dnsRecordFetcher.exportNSRecord(dnsModel);
+            // Checking if we have Click on Ping Button
+            if (!val) {
+                // Setting the Record TexView when we click on PING
+                nsRecord.setText(dnsRecordFetcher.nsRecord(dnsModel));
             }
+
+            // Storing the formatted data in output Array<String>
+            output[3] = dnsRecordFetcher.exportNSRecord(dnsModel);
         });
 
         // init ViewModel
         viewModelTXTRecord.init();
 
-        viewModelTXTRecord.getData().observe(this, new Observer<DnsModel>() {
-            @Override
-            public void onChanged(DnsModel dnsModel) {
-                // init DnsRecordFormatter
-                DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter();
+        viewModelTXTRecord.getData().observe(this, dnsModel -> {
+            // init DnsRecordFormatter
+            DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(this.getContext());
 
-                // Checking if we have Click on Ping Button
-                if (!val) {
-                    // Setting the Record TexView when we click on PING
-                    txtRecord.setText(dnsRecordFetcher.txtRecord(dnsModel));
-                }
-
-                // Storing the formatted data in output Array<String>
-                output[4] = dnsRecordFetcher.exportTXTRecord(dnsModel);
+            // Checking if we have Click on Ping Button
+            if (!val) {
+                // Setting the Record TexView when we click on PING
+                txtRecord.setText(dnsRecordFetcher.txtRecord(dnsModel));
             }
+
+            // Storing the formatted data in output Array<String>
+            output[4] = dnsRecordFetcher.exportTXTRecord(dnsModel);
         });
     }
 
@@ -421,22 +403,19 @@ public class DnsResolution extends Fragment {
     }
 
     // get DNS Records for Top 10 Tranco Sites
-    public void Top10TrancoSiteDatatoCsv() {
+    public void Top10TrancoSiteDatatoCsv(int n) {
         deleteCsv();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int i = 0; i < 10; i++) {
-                    Task task = new Task();
-                    task.execute(top10TrancoSites[i]);
-                }
+        new Thread(() -> {
+            for (int i = 0; i < n; i++) {
+                Task1 task = new Task1();
+                task.execute(top1000TrancoSites[i]);
             }
         }).start();
     }
 
     // Async Task for getting DNS Records in the Background
     @SuppressLint("StaticFieldLeak")
-    private class Task extends AsyncTask<String, Void, Void> {
+    private class Task1 extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
             getDnsRecords(strings[0]);
@@ -456,137 +435,82 @@ public class DnsResolution extends Fragment {
 
     // Async Task for getting DNS Record for Top 10 Sites in Background
     @SuppressLint("StaticFieldLeak")
-    private class BackGroundTask extends AsyncTask<Void, Void, Boolean> {
+    private class BackGroundTask extends AsyncTask<Integer, Void, Void> {
         @Override
-        protected Boolean doInBackground(Void... voids) {
-            Top10TrancoSiteDatatoCsv();
-            return true;
+        protected Void doInBackground(Integer... integers) {
+            Top10TrancoSiteDatatoCsv(integers[0]);
+            return null;
         }
     }
 
-    public String getDnsServer(){
-        StringBuilder builder = new StringBuilder();
-        ConnectivityManager connectivityManager = (ConnectivityManager) this.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        Network network = connectivityManager.getActiveNetwork();
-        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-        if(info.isConnected()){
-            LinkProperties linkProperties    = connectivityManager.getLinkProperties(network);
-
-            List<InetAddress> dnsServersList = linkProperties.getDnsServers();
-            for(InetAddress element: dnsServersList){
-                builder.append(element.getHostAddress() + "\n");
-                break;
+    public void storeToFireStore(int num) throws IOException, InterruptedException {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("serial", Math.floor(Math.random() * Long.MAX_VALUE));
+        data.put("timestamp", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("MM/dd/uuuu h:mm:ss a xxx")));
+        data.put("totol_url_range", num);
+        HashMap<String, String> network_data = getNetworkName();
+        data.put("LTE Network", network_data.get("LTE Network"));
+        data.put("Wifi Network", network_data.get("Wifi Network"));
+        GetIpAddress getIpAddress = new GetIpAddress(this.getContext());
+        getIpAddress.getDnsServer();
+        if (!getIpAddress.checkPublicDns()) {
+            final DocumentReference[] df = new DocumentReference[1];
+            db.collection("dns_resolve").add(data).addOnCompleteListener(task -> df[0] = task.getResult());
+            Thread.sleep(200);
+            for (int i = 0; i < num; i++) {
+                getIpAddress.getDnsStuff(top1000TrancoSites[i]);
+                data.put("pubic_dns", "no");
+                final HashMap<String, Object> hashMap = getIpAddress.getHashMap(top1000TrancoSites[i]);
+                getIpAddress.clear();
+                hashMap.put("resolved_time", hashMap.get("resolved_time"));
+                df[0].collection("metric").document(top1000TrancoSites[i]).set(hashMap);
+                Thread.sleep(200);
             }
+        } else {
+            data.put("pubic_dns", "yes");
+            db.collection("dns_resolve").add(data);
         }
 
-        return  builder.toString();
     }
 
-    public String getNetworkName(){
-        StringBuilder builder = new StringBuilder();
-        ConnectivityManager connectivityManager = (ConnectivityManager) this.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+    public HashMap<String, String> getNetworkName() {
+        HashMap<String, String> network_data = new HashMap<>();
+        ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if(networkInfo.isConnected()){
-            if(networkInfo.getType() == ConnectivityManager.TYPE_WIFI){
-                WifiManager wifiMgr = (WifiManager) this.getContext().getSystemService(Context.WIFI_SERVICE);
-                WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-                builder.append(wifiInfo.getSSID());
+        if (networkInfo.isConnected()) {
+            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                network_data.put("Wifi Network", dnsServer);
+                network_data.put("LTE Network", "NaN");
+            } else if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
+                TelephonyManager manager = (TelephonyManager) requireContext().getSystemService(Context.TELEPHONY_SERVICE);
+                network_data.put("Wifi Network", "NaN");
+                network_data.put("LTE Network", manager.getNetworkOperatorName());
             }
-            else if(networkInfo.getType() == ConnectivityManager.TYPE_MOBILE){
-                TelephonyManager manager = (TelephonyManager) this.getContext().getSystemService(Context.TELEPHONY_SERVICE);
-                builder.append(manager.getNetworkOperatorName());
-            }
+        } else {
+            network_data.put("Wifi Network", "No Internet Connection");
+            network_data.put("LTE Network", "No Internet Connection");
+        }
+
+        return network_data;
+    }
+
+    private class BackGroundTask1 extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            model.fetchLiveData();
+            return null;
+        }
+    }
+
+    public boolean checkConnectivity(){
+        ConnectivityManager connectivityManager = (ConnectivityManager) requireContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if(networkInfo == null | !networkInfo.isConnected()){
+            return false;
         }
         else{
-            builder.append("null");
+            return true;
         }
-
-        return builder.toString();
-    }
-
-    public void getWifiData(){
-        WifiViewModel model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
-
-        final StringBuilder stringBuilder = new StringBuilder();
-        model.init();
-        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
-            @Override
-            public void onChanged(WifiDataModel wifiDataModel) {
-                stringBuilder.append(wifiDataModel.getOrg()).append(" ").append(wifiDataModel.getCompany().getDomain());
-                dnsServer = stringBuilder.toString();
-                System.out.println(dnsServer);
-            }
-        });
-    }
-
-    public void storeToFireStore(){
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        Map<String,Object> mp = new Map<String, Object>() {
-            @Override
-            public int size() {
-                return 0;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return false;
-            }
-
-            @Override
-            public boolean containsKey(@Nullable Object key) {
-                return false;
-            }
-
-            @Override
-            public boolean containsValue(@Nullable Object value) {
-                return false;
-            }
-
-            @Nullable
-            @Override
-            public Object get(@Nullable Object key) {
-                return null;
-            }
-
-            @Nullable
-            @Override
-            public Object put(String key, Object value) {
-                return null;
-            }
-
-            @Nullable
-            @Override
-            public Object remove(@Nullable Object key) {
-                return null;
-            }
-
-            @Override
-            public void putAll(@NonNull Map<? extends String, ?> m) {
-
-            }
-
-            @Override
-            public void clear() {
-
-            }
-
-            @NonNull
-            @Override
-            public Set<String> keySet() {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public Collection<Object> values() {
-                return null;
-            }
-
-            @NonNull
-            @Override
-            public Set<Entry<String, Object>> entrySet() {
-                return null;
-            }
-        };
     }
 }
