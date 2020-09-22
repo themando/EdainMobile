@@ -14,25 +14,32 @@ import java.util.HashMap;
 // Class Contain Methods for formatting the data for different records
 public class DnsRecordFormatter {
     Context context;
+
     public DnsRecordFormatter(Context context) {
         this.context = context;
     }
 
     public String aRecord(DnsModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        ArrayList<String> list = new ArrayList<>();
+        assert model != null;
+        if (model.getRecordData() != null && model.getRecordData().size() != 0) {
+            list = getIPAddressList(model.getRecordData().get(0).getName().substring(0, model.getRecordData().get(0).getName().length() - 1));
+//            System.out.println(model.getRecordData().get(0).getName());
+        }
+        for (int i = 0; i < (model.getRecordData() != null ? Math.min(model.getRecordData().size(), list.size()) : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
-            stringBuilder.append(recordData.getName()).append("/").append(recordData.getData()).append("\n");
-            stringBuilder.append(getIPAddress(recordData.getName())).append("\n\n");
+            stringBuilder.append(recordData.getName()).append("/").append(list.get(i)).append("\n");
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     public String soaRecord(DnsModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String[] val = recordData.getData().split(" ");
             stringBuilder.append("Primary Server       ").append(val[0]).append("\n");
@@ -41,56 +48,62 @@ public class DnsRecordFormatter {
             stringBuilder.append("Refresh              ").append(val[3]).append("\n");
             stringBuilder.append("Retry                ").append(val[4]).append("\n");
             stringBuilder.append("Expire               ").append(val[5]).append("\n");
-            stringBuilder.append("TTL                  ").append(recordData.getTTL()).append("\n\n");
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     public String mxRecord(DnsModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String[] val = recordData.getData().split(" ");
             stringBuilder.append(val[1]).append("\n");
             stringBuilder.append(getIPAddress(val[1])).append("          ").append("Preferences:").append(val[0]).append("\n\n");
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     public String nsRecord(DnsModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String val = recordData.getData();
             stringBuilder.append(val).append("\n");
             stringBuilder.append(getIPAddress(val)).append("\n\n");
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     public String txtRecord(DnsModel model) {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < (model != null & model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String val = recordData.getData();
             stringBuilder.append(val).append("\n\n");
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     public ArrayList<String> exportARecord(DnsModel model) {
         ArrayList<String> out = new ArrayList<>();
-        for (int i = 0; i < (model != null & model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
-            DnsRecordData recordData = model.getRecordData().get(i);
-            String val = recordData.getData();
+        ArrayList<String> list = new ArrayList<>();
+        assert model != null;
+        if (model.getRecordData() != null && model.getRecordData().size() != 0) {
+            list = getIPAddressList(model.getRecordData().get(0).getName().substring(0, model.getRecordData().get(0).getName().length() - 1));
+        }
+        for (int i = 0; i < (model.getRecordData() != null ? Math.min(model.getRecordData().size(),list.size()) : 0); i++) {
+            String val = list.get(i);
             val = val.replaceAll("\\s", ",");
             val += "\n";
             out.add(val);
@@ -100,7 +113,8 @@ public class DnsRecordFormatter {
 
     public ArrayList<String> exportSOARecord(DnsModel model) {
         ArrayList<String> out = new ArrayList<>();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String[] val = recordData.getData().split(" ");
             String val1 = val[0] + "," + val[1] + "," + val[2] + "," + val[3] + "," + val[4] + "," + val[5];
@@ -112,7 +126,8 @@ public class DnsRecordFormatter {
 
     public ArrayList<String> exportMXRecord(DnsModel model) {
         ArrayList<String> out = new ArrayList<>();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String[] val = recordData.getData().split(" ");
             String val1 = getIPAddress(val[1]) + " " + recordData.getData();
@@ -125,7 +140,8 @@ public class DnsRecordFormatter {
 
     public ArrayList<String> exportNSRecord(DnsModel model) {
         ArrayList<String> out = new ArrayList<>();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String val = recordData.getData();
             val = val + " " + getIPAddress(val);
@@ -138,7 +154,8 @@ public class DnsRecordFormatter {
 
     public ArrayList<String> exportTXTRecord(DnsModel model) {
         ArrayList<String> out = new ArrayList<>();
-        for (int i = 0; i < (model != null ? model.getRecordData().size() : 0); i++) {
+        assert model != null;
+        for (int i = 0; i < (model.getRecordData() != null ? model.getRecordData().size() : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             String val = recordData.getData();
             val = val.replaceAll("\\s", ",");
@@ -148,24 +165,45 @@ public class DnsRecordFormatter {
         return out;
     }
 
+    // method for getting IP address
     public String getIPAddress(String url) {
         StringBuilder stringBuilder = new StringBuilder();
+
+        try {
+            InetAddress inetAddress = InetAddress.getByName(url);
+            stringBuilder.append(inetAddress.getHostAddress());
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            stringBuilder.append(e.getMessage());
+        }
+
+        System.out.println(stringBuilder.toString());
+        return stringBuilder.toString();
+    }
+
+    // method for getting list of resolved IP addresses
+    public ArrayList<String> getIPAddressList(String url) {
+        ArrayList<String> list = new ArrayList<>();
+//        System.out.println(url);
 
         GetIpAddress getIpAddress = new GetIpAddress(context);
         getIpAddress.getDnsServer();
         try {
             getIpAddress.getDnsStuff(url);
-            Thread.sleep(1000);
+            Thread.sleep(200);
             final HashMap<String, Object> hashMap = getIpAddress.getHashMap(url);
-            ArrayList<String> ipv4 = (ArrayList<String>) hashMap.get("resolved_ipv4");
-            ArrayList<String> ipv6 = (ArrayList<String>) hashMap.get("resolved_ipv6");
-
-        } catch (SocketException | InterruptedException | UnknownHostException e) {
+            if (hashMap.get("resolved_ipv4") != "NaN") {
+                ArrayList<String> ipv4 = (ArrayList<String>) hashMap.get("resolved_ipv4");
+                assert ipv4 != null;
+                list.addAll(ipv4);
+            } else {
+                list.add("NaN");
+            }
+        } catch (SocketException | UnknownHostException | InterruptedException e) {
             e.printStackTrace();
-            stringBuilder.append("NaN");
+            list.add("NaN");
         }
 
-        System.out.println(stringBuilder.toString());
-        return stringBuilder.toString();
+        return list;
     }
 }

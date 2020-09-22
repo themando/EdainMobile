@@ -3,6 +3,7 @@ package com.example.ping;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,7 +27,7 @@ import java.io.File;
 // To remove these restrictions, a license is required.
 // https://chaquo.com/chaquopy/license/
 
-public class Speed extends AppCompatActivity {
+public class Speed extends Activity {
     private static final String FILE_NAME = "speedtest.csv";
 
     @Override

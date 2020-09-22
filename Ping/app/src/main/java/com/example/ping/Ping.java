@@ -3,6 +3,7 @@ package com.example.ping;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -24,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class Ping extends AppCompatActivity {
+public class Ping extends Activity {
     private static final String FILE_NAME = "ping.csv";
 
     @Override
@@ -175,7 +176,7 @@ public class Ping extends AppCompatActivity {
                 fos.write(headers.getBytes());
             }
             fos.write(output.getBytes());
-            Toast.makeText(this, res, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, output, Toast.LENGTH_LONG).show();
             fos.close();
         } catch (Exception e) {
             e.printStackTrace();
