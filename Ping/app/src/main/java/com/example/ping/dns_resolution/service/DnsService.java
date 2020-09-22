@@ -66,7 +66,7 @@ public class DnsService extends LiveData<DnsModel> {
                     @Override
                     public void onResponse(@NotNull Call<DnsModel> call, @NotNull Response<DnsModel> response) {
                         if (response.body() != null) {
-                            System.out.println(response.body());
+//                            System.out.println(response.body());
                             dnsModelLiveData.setValue(response.body());
                         } else {
                             dnsModelLiveData.setValue(null);
@@ -75,7 +75,8 @@ public class DnsService extends LiveData<DnsModel> {
 
                     @Override
                     public void onFailure(@NotNull Call<DnsModel> call, @NotNull Throwable t) {
-                        System.out.println(t.getMessage());
+//                        System.out.println(t.getMessage());
+                        t.printStackTrace();
                         dnsModelLiveData.setValue(null);
                     }
                 });

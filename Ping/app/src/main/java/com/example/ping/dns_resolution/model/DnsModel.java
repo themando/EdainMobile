@@ -7,7 +7,7 @@ import java.util.List;
 // Model for Parsing the JSON Response
 
 public class DnsModel {
-    @SerializedName(value = "Answer", alternate={"Authority"})
+    @SerializedName(value = "Answer", alternate = {"Authority"})
     private List<DnsRecordData> recordData;
 
 
