@@ -7,10 +7,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.chaquo.python.PyObject;
@@ -29,6 +32,8 @@ import java.io.File;
 
 public class Speed extends Activity {
     private static final String FILE_NAME = "speedtest.csv";
+    speedtest async = new speedtest();
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,8 @@ public class Speed extends Activity {
         Button clearButton = (Button) findViewById(R.id.clearSpeedButton);
         final EditText classText = (EditText) findViewById(R.id.classEditText);
         final EditText intervText = (EditText) findViewById(R.id.intervalEditText);
+        progressBar = (ProgressBar) this.findViewById(R.id.progressbar);
+
 
         // Click Speed Button
         speedButton.setOnClickListener(new View.OnClickListener() {
@@ -57,6 +64,7 @@ public class Speed extends Activity {
                 } else {
                     classInt = Integer.parseInt(classStr);
                     intervInt = Integer.parseInt(intervStr);
+
                 }
 
                 // Invalid inputs - values
@@ -65,9 +73,17 @@ public class Speed extends Activity {
                 }
 
                 // Run speed test
+                Toast.makeText(Speed.this, "Please wait, this will take 2-3 minutes!", Toast.LENGTH_LONG).show();
+                progressBar.setVisibility(View.VISIBLE);
+                Log.i("Before running python object","line 71");
                 Python py = Python.getInstance();
+                Log.i("Before running PyObject","line 73");
                 PyObject pyf = py.getModule("run_speedtest");
+                Log.i("After running PyObject","line 75");
                 PyObject obj = pyf.callAttr("main", classInt, intervInt);
+                Log.i("After running obj","line 77");
+                Toast.makeText(Speed.this, "All done!!", Toast.LENGTH_SHORT).show();
+
             }
         });
 
@@ -111,6 +127,40 @@ public class Speed extends Activity {
             e.printStackTrace();
         }
 
+    }
+
+    public class speedtest extends AsyncTask<int[], String, Void>{
+        @Override
+        protected void onPreExecute(){
+            // This runs on the UI thread before the background thread executes.
+            super.onPreExecute();
+            // Do pre-thread tasks such as initializing variables.
+            progressBar.setVisibility(View.VISIBLE);
+            Log.v("myBackgroundTask", "Starting Background Task");
+        }
+
+        @Override
+        protected Void doInBackground(int[]...v) {
+            int[] inputs=v[0];
+            Log.i("Before running python object","line 71");
+            Python py = Python.getInstance();
+            Log.i("Before running PyObject","line 73");
+            PyObject pyf = py.getModule("run_speedtest");
+            Log.i("After running PyObject","line 75");
+            PyObject obj = pyf.callAttr("main", inputs[0], inputs[1]);
+            Log.i("After running obj","line 77");
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void results) {
+            // This runs on the UI thread after complete execution of the doInBackground() method
+            // This function receives result(String results) returned from the doInBackground() method.
+            // Update UI with the found string.
+            super.onPostExecute(results);
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(Speed.this, "All Done!", Toast.LENGTH_LONG).show();
+        }
     }
 
 }

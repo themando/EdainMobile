@@ -140,7 +140,7 @@ public class Latency extends AppCompatActivity {
              int num = 0;
 
              @Override
-        protected void onPreExecute(){
+             protected void onPreExecute(){
             // This runs on the UI thread before the background thread executes.
             super.onPreExecute();
             saveData(doc_ser);
