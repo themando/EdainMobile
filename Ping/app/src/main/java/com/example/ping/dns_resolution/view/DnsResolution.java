@@ -243,7 +243,7 @@ public class DnsResolution extends Fragment {
                     scrollView.setVisibility(View.INVISIBLE);
                     progressBar.setVisibility(View.VISIBLE);
 
-                    int n = Integer.parseInt(s);
+                    final int n = Integer.parseInt(s);
 
                     //  number of tranco sites taken as input
                     final Handler handler = new Handler();
@@ -315,7 +315,8 @@ public class DnsResolution extends Fragment {
                 wifiNetworkName = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
             }
         });
-        Context context = this.getContext();
+
+        final Context context = this.getContext();
 
         viewModelARecord.init();
 
@@ -536,12 +537,16 @@ public class DnsResolution extends Fragment {
     }
 
     // get DNS Records for Top N Tranco Sites
-    public void Top10TrancoSiteDatatoCsv(int n) {
+
+    public void Top10TrancoSiteDatatoCsv(final int n) {
         deleteCsv();
-        new Thread(() -> {
-            for (int i = 0; i < n; i++) {
-                Task1 task = new Task1();
-                task.execute(top1000TrancoSites[i]);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < n; i++) {
+                    Task1 task = new Task1();
+                    task.execute(top1000TrancoSites[i]);
+                }
             }
         }).start();
     }
