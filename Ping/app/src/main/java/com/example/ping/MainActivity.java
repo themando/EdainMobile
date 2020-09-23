@@ -1,14 +1,11 @@
 package com.example.ping;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toolbar;
 
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
