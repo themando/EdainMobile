@@ -12,12 +12,19 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStore;
 
+import com.example.ping.Wifi_Network_Info.model.WifiDataModel;
+import com.example.ping.Wifi_Network_Info.viewmodel.WifiViewModel;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -55,10 +62,8 @@ public class TracerouteWithPing {
     private String ipToPing;
     private TraceActivity context;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    Random random = new Random();
-    int randomNumber = random.nextInt(999999999);
-    int doc_ser = randomNumber;
     int num = 0;
+//    String wifi_name;
 
     // timeout handling
     private static final int TIMEOUT = 30000;
@@ -75,21 +80,22 @@ public class TracerouteWithPing {
      * @param url    The url to trace
      * @param maxTtl The max time to live to set (ping param)
      */
-    public void executeTraceroute(String url, int maxTtl) {
+    public void executeTraceroute(String url, int maxTtl ) throws InterruptedException {
         this.ttl = 1;
         this.finishedTasks = 0;
         this.url = url;
         context.startProgressBar();
+        saveData();
         new SaveAsyncTask(url);
         new ExecutePingAsyncTask(maxTtl, url).execute();
     }
 
-    public void executeTrancoTraceroute(int maxTtl, ArrayList<String> urls) {
+    public void executeTrancoTraceroute(int maxTtl, ArrayList<String> urls) throws InterruptedException {
         this.ttl = 1;
         this.finishedTasks = 0;
         this.urls = urls;
         context.startProgressBar();
-
+        saveData();
         new SaveTrancoAsyncTask(urls);
         for (int i = 0; i < urls.size(); i++) {
             new ExecutePingAsyncTask(maxTtl, String.valueOf(urls.get(i))).execute();
@@ -107,7 +113,6 @@ public class TracerouteWithPing {
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            saveData();
             InetAddress ip_host;
             String url_host = "https://" + url.trim() + "/";
             try {
@@ -119,7 +124,7 @@ public class TracerouteWithPing {
             Map<String, Object> m = new HashMap<>();
             m.put("resolved_ip", resolved_ip);
 
-            db.collection("traceroute").document(String.valueOf(doc_ser))
+            db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
                     .collection("metric").document(url).set(m)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
@@ -151,7 +156,6 @@ public class TracerouteWithPing {
 
         @Override
         protected Void doInBackground(Void... arg0) {
-            saveData();
             for (int i = 0; i < urls.size(); i++) {
                 String url_host = "https://" + urls.get(i).trim() + "/";
                 InetAddress ip_host;
@@ -163,7 +167,7 @@ public class TracerouteWithPing {
                 String resolved_ip = String.valueOf(ip_host);
                 Map<String, Object> m = new HashMap<>();
                 m.put("resolved_ip", resolved_ip);
-                db.collection("traceroute").document(String.valueOf(doc_ser))
+                db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
                         .collection("metric").document(urls.get(i)).set(m)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
@@ -307,24 +311,18 @@ public class TracerouteWithPing {
         return "NN";
     }
 
-//    public String getWifiData(){
-//        WifiViewModel model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
-//
-//        final StringBuilder stringBuilder = new StringBuilder();
-//        model.init();
-//        model.fetchLiveData();
-//        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
-//            public String onChanged(WifiDataModel wifiDataModel) {
-//                stringBuilder.append(wifiDataModel.getOrg()).append(" ").append(wifiDataModel.getCompany().getDomain());
-//                return stringBuilder.toString();
-//            }
-//        });
-//    }
+    private class WifiTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            TraceActivity.model.fetchLiveData();
+            return null;
+        }
+    }
 
     private void saveData() {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yy | hh:mm:ss");
-        String lte;
-        String wifi;
+        final String[] lte = new String[1];
+        final String[] wifi = new String[1];
         String totalURLrange;
         if (this.urls != null) {
             totalURLrange = String.valueOf(this.urls.size());
@@ -334,34 +332,68 @@ public class TracerouteWithPing {
         String timestamp = simpleDateFormat.format(new Date());
 
         if (isWifi(context)) {
-            wifi = getWifiName(context);
-            lte = "NN";
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    WifiTask task = new WifiTask();
+                    task.execute();
+                    try {
+                        Thread.sleep(5000);
+                        wifi[0] = TraceActivity.wifi_name;
+//                        System.out.println(wifi[0]);
+//                        System.out.println(SystemClock.elapsedRealtime());
+                        lte[0] = "NN";
+                        Map<String, Object> traceroute = new HashMap<>();
+                        traceroute.put("lteNetwork", lte[0]);
+                        traceroute.put("wifiNetwork", wifi[0]);
+                        traceroute.put("timestamp", timestamp);
+                        traceroute.put("totalURLRange", totalURLrange);
+                        traceroute.put("serial", String.valueOf(TraceActivity.doc_ser));
+
+                        db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
+                                .set(traceroute)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("FIRESTORE", "Error writing document", e);
+                                    }
+                                });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         } else {
-            wifi = "NN";
-            lte = getNetworkClass(context);
+            wifi[0] = "NN";
+            lte[0] = getNetworkClass(context);
+            Map<String, Object> traceroute = new HashMap<>();
+            traceroute.put("lteNetwork", lte[0]);
+            traceroute.put("wifiNetwork", wifi[0]);
+            traceroute.put("timestamp", timestamp);
+            traceroute.put("totalURLRange", totalURLrange);
+            traceroute.put("serial", String.valueOf(TraceActivity.doc_ser));
+
+            db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
+                    .set(traceroute)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w("FIRESTORE", "Error writing document", e);
+                        }
+                    });
         }
-
-        Map<String, Object> traceroute = new HashMap<>();
-        traceroute.put("lteNetwork", lte);
-        traceroute.put("wifiNetwork", wifi);
-        traceroute.put("timestamp", timestamp);
-        traceroute.put("totalURLRange", totalURLrange);
-        traceroute.put("serial", String.valueOf(doc_ser));
-
-        db.collection("traceroute").document(String.valueOf(doc_ser))
-                .set(traceroute)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("FIRESTORE", "Error writing document", e);
-                    }
-                });
 
     }
 
@@ -414,7 +446,7 @@ public class TracerouteWithPing {
                         m_2.put("hop_url", hostname);
                         m_2.put("hop_ip", trace.getIp());
                         m_2.put("latency", m_1);
-                        db.collection("traceroute").document(String.valueOf(doc_ser))
+                        db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
                                 .collection("metric").document(urlToPing).
                                 collection("routing").document(String.format("hop-%d",num)).set(m_2)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -443,7 +475,7 @@ public class TracerouteWithPing {
                         m_2.put("hop_url", hostname);
                         m_2.put("hop_ip", trace.getIp());
                         m_2.put("latency", m_1);
-                        db.collection("traceroute").document(String.valueOf(doc_ser))
+                        db.collection("traceroute").document(String.valueOf(TraceActivity.doc_ser))
                                 .collection("metric").document(urlToPing).
                                 collection("routing").document(String.format("hop-%d",num)).set(m_2)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
