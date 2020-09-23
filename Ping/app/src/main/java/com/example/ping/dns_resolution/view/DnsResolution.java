@@ -315,6 +315,7 @@ public class DnsResolution extends Fragment {
                 wifiNetworkName = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
             }
         });
+
         final Context context = this.getContext();
 
         viewModelARecord.init();
@@ -536,6 +537,7 @@ public class DnsResolution extends Fragment {
     }
 
     // get DNS Records for Top N Tranco Sites
+
     public void Top10TrancoSiteDatatoCsv(final int n) {
         deleteCsv();
         new Thread(new Runnable() {
