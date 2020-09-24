@@ -1,15 +1,20 @@
 package com.example.ping;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 //import com.example.ping.PingTrancoSites;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +27,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.TableRow.LayoutParams;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.telephony.TelephonyManager;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,18 +54,38 @@ import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 import java.util.TimeZone;
 
 import static java.lang.Integer.parseInt;
 
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStore;
+
+import com.example.ping.Wifi_Network_Info.model.WifiDataModel;
+import com.example.ping.Wifi_Network_Info.viewmodel.WifiViewModel;
+
 public class Latency extends AppCompatActivity {
     private static final String FILE_NAME = "ping.csv";
+    static WifiViewModel model;
+   // static int doc_ser;
+    static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
     TableLayout tl;
     RelativeLayout tableLayout;
     TableRow tr;
     PingTrancoSites asyncPing = new PingTrancoSites();
     TextView newRow,anotherRow;
     ProgressBar progressBar;
+
+
+    /**
+     * Adding Firestore services:
+     */ FirebaseFirestore db = FirebaseFirestore.getInstance();
+
 
     String[] sites = {"google.com","facebook.com","youtube.com","microsoft.com",
             "twitter.com","tmall.com","instagram.com","windowsupdate.com","netflix.com","linkedin.com","qq.com","baidu.com","wikipedia.org","apple.com","live.com","sohu.com","yahoo.com","amazon.com","doubleclick.net","googletagmanager.com","taobao.com","adobe.com","youtu.be","pinterest.com","360.cn","vimeo.com","jd.com","reddit.com","wordpress.com","weibo.com","office.com","bing.com","blogspot.com","sina.com.cn","goo.gl","github.com","zoom.us","googleusercontent.com","amazonaws.com","bit.ly","wordpress.org","vk.com","microsoftonline.com","fbcdn.net","xinhuanet.com","tumblr.com","godaddy.com","mozilla.org","msn.com","skype.com","google-analytics.com","nytimes.com","flickr.com","whatsapp.com","okezone.com","ytimg.com","dropbox.com","gravatar.com","soundcloud.com","europa.eu","myshopify.com","alipay.com","cnn.com","nih.gov","apache.org","t.co","csdn.net","twitch.tv","office365.com","yahoo.co.jp","w3.org","macromedia.com","theguardian.com","googlevideo.com","medium.com","ebay.com","forbes.com","sourceforge.net","bbc.co.uk","spotify.com","bongacams.com","google.com.hk","imdb.com","paypal.com","zhanqi.tv","panda.tv","naver.com","aliexpress.com","googleadservices.com","bbc.com","archive.org","cloudflare.com","googlesyndication.com","stackoverflow.com","github.io","amazon.in","yandex.ru","weebly.com","creativecommons.org","china.com.cn"
@@ -61,6 +103,17 @@ public class Latency extends AppCompatActivity {
         Button clearButton = (Button) findViewById(R.id.clearPingButton);
         progressBar = (ProgressBar) this.findViewById(R.id.progressbar);
 
+        //init instance of WifiViewModel
+        model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
+        model.init();
+        final double[] value = {SystemClock.elapsedRealtime()};
+        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
+            @Override
+            public void onChanged(WifiDataModel wifiDataModel) {
+                wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+            }
+        });
+
 
         /** Click Ping Button **/
         pingButton.setOnClickListener(new View.OnClickListener() {
@@ -74,7 +127,7 @@ public class Latency extends AppCompatActivity {
                 if(asyncPing!=null && asyncPing.getStatus() != AsyncTask.Status.FINISHED){Log.i("asyncPing!=null-","set to true");
                     asyncPing.cancel(true); }
                 tl.removeAllViews();
-            //Start Pinging, call async function
+            /**Start Pinging, call async function**/
                 addHeaders();
                 asyncPing = new PingTrancoSites();
                 asyncPing.execute(sites);
@@ -101,12 +154,18 @@ public class Latency extends AppCompatActivity {
 
          // Aysnc function for pinging through all the sites
     public class PingTrancoSites extends AsyncTask<String[], String, Void> {
+        Map<String, Object> m = new HashMap<>();
+        Map<String,Object> M = new HashMap<>();
+             Random random = new Random();
+             int randomNumber = random.nextInt(999999999);
+             int doc_ser = randomNumber;
+             int num = 0;
 
-        //Latency latency = new Latency(this.context);
-        @Override
-        protected void onPreExecute(){
+             @Override
+             protected void onPreExecute(){
             // This runs on the UI thread before the background thread executes.
             super.onPreExecute();
+            saveData(doc_ser);
             // Do pre-thread tasks such as initializing variables.
 
             progressBar.setVisibility(View.VISIBLE);
@@ -115,32 +174,84 @@ public class Latency extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(String[]... sites) {
+
+
             if(isCancelled())
             { Log.i("iscancelled","set to true"); return null;}
             String results;
-            for (String site : sites[0]) {
+            String[] site = sites[0];
+            for (int i = 0; i<site.length ; i++) {
+               // site[i]="www."+ site[i];
                 if(isCancelled())
                 { Log.i("iscancelled","set to true"); return null;}
 
-                    String cmd = "/system/bin/ping -c " + "1" + " " + site;
-                    Log.i("site:", site);
+                InetAddress ip_host;
+                String url_host = "https://www." + site[i].trim() + "/";
+                try {
+                    ip_host = InetAddress.getByName(new URL(url_host).getHost());
+                } catch (UnknownHostException | MalformedURLException e) {
+                    ip_host = null;
+                }
+                
+                String resolved_ip = String.valueOf(ip_host);
+                Map<String, Object> m1 = new HashMap<>();
+                m1.put("resolved_ip", resolved_ip);
+
+                db.collection("latency").document(String.valueOf(doc_ser))
+                        .collection("metric").document(site[i]).set(m1)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("FIRESTORE", "Error writing document", e);
+                            }
+                        });
+
+
+                String cmd = "/system/bin/ping -c " + "1" + " " + site[i];
+                    Log.i("site:", site[i]);
                     Process p = executeCmd(cmd);
                     String pingStats = getPingStats(p);
-                    pingStats = formatStats(pingStats, site, "1");
+                    pingStats = formatStats(pingStats, site[i], "1");
                     if (pingStats != null) {
                         results = pingStats;
                         Log.i("results after pinging Tranco site", results);
-                        writeCsv(results, site, "1");
+                        writeCsv(results, site[i], "1");
 
+                        String[] resList = results.split(",");
+                        m.put("min",resList[4]);
+                        m.put("avg",resList[5]);
+                        m.put("max",resList[6]);
+
+                        M.put("latency",m);
+                        db.collection("latency").document(String.valueOf(doc_ser))
+                                .collection("metric").document(site[i]).set(M)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("FIRESTORE", "Error writing document", e);
+                                    }
+                                });
                         if (parseInt(results.split(",")[3]) == 100) {
                             results = "100% Loss :(";
                         }
                     } else {
-                        Log.i("null situation", site);
+                        Log.i("null situation", site[i]);
                         results = "Oops, site unreachable";
                     }
 
-                    publishProgress("We're still pinging .. Please wait!", results, site);
+                    publishProgress("We're still pinging .. Please wait!", results, site[i], Integer.toString(i));
             }
             return null;
         }
@@ -150,8 +261,9 @@ public class Latency extends AppCompatActivity {
             // Runs on the UI thread after publishProgress is invoked
             progressBar.setVisibility(View.VISIBLE);
             Toast.makeText(Latency.this, p[0], Toast.LENGTH_SHORT).show();
-            addData(p[2] , p[1]);
+            addData(p[2], p[1]);
             Log.i("After adding row", p[1]);
+
         }
 
         @Override
@@ -165,7 +277,6 @@ public class Latency extends AppCompatActivity {
             progressBar.setVisibility(View.GONE);
 
             //Toast.makeText(this, "All Done!", Toast.LENGTH_LONG).show();
-
         }
     }
 
@@ -548,4 +659,165 @@ public class Latency extends AppCompatActivity {
                 LayoutParams.WRAP_CONTENT));
 
     }
+
+    private void saveData(int doc_ser) {
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yy | hh:mm:ss");
+        final String[] lte = new String[1];
+        final String[] wifi = new String[1];
+        String totalURLrange;
+        if (this.sites != null) {
+            totalURLrange = String.valueOf(this.sites.length);
+        } else {
+            totalURLrange = String.valueOf(1);
+        }
+        String timestamp = simpleDateFormat.format(new Date());
+
+        if (isWifi(this)) {
+            new Thread(new Runnable() {
+               @Override
+                public void run() {
+                    WifiTask task = new WifiTask();
+                    task.execute();
+                    try {
+                        Thread.sleep(5000);
+                        wifi[0] = Latency.wifi_name;
+//                        System.out.println(wifi[0]);
+//                        System.out.println(SystemClock.elapsedRealtime());
+                        lte[0] = "NN";
+                        Map<String, Object> latency = new HashMap<>();
+                        latency.put("lteNetwork", lte[0]);
+                        latency.put("wifiNetwork", wifi[0]);
+                        latency.put("timestamp", timestamp);
+                        latency.put("totalURLRange", totalURLrange);
+                        latency.put("serial", String.valueOf(doc_ser));
+
+                        db.collection("latency").document(String.valueOf(doc_ser))
+                                .set(latency)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("FIRESTORE", "Error writing document", e);
+                                    }
+                                });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        } else {
+            wifi[0] = "NN";
+            lte[0] = getNetworkClass(getApplicationContext());
+            Map<String, Object> latency = new HashMap<>();
+            latency.put("lteNetwork", lte[0]);
+            latency.put("wifiNetwork", wifi[0]);
+            latency.put("timestamp", timestamp);
+            latency.put("totalURLRange", totalURLrange);
+            latency.put("serial", String.valueOf(doc_ser));
+
+            db.collection("latency").document(String.valueOf(doc_ser))
+                    .set(latency)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w("FIRESTORE", "Error writing document", e);
+                        }
+                    });
+        }
+
+    }
+
+    public boolean isWifi(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        if (info == null) {
+            return false;
+        }
+        return info.getType() == ConnectivityManager.TYPE_WIFI;
+    }
+
+    public String getNetworkClass(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        String format;
+        if (info == null || !info.isConnected())
+            return "-"; // not connected
+        if (info.getType() == ConnectivityManager.TYPE_WIFI)
+            return "WIFI";
+        if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
+            int networkType = info.getSubtype();
+            switch (networkType) {
+                case TelephonyManager.NETWORK_TYPE_GPRS:
+                case TelephonyManager.NETWORK_TYPE_EDGE:
+                case TelephonyManager.NETWORK_TYPE_CDMA:
+                case TelephonyManager.NETWORK_TYPE_1xRTT:
+                case TelephonyManager.NETWORK_TYPE_IDEN:     // api< 8: replace by 11
+                case TelephonyManager.NETWORK_TYPE_GSM:      // api<25: replace by 16
+                    format = String.format("2G / %s", manager.getNetworkOperatorName());
+                    return format;
+                case TelephonyManager.NETWORK_TYPE_UMTS:
+                case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                case TelephonyManager.NETWORK_TYPE_HSDPA:
+                case TelephonyManager.NETWORK_TYPE_HSUPA:
+                case TelephonyManager.NETWORK_TYPE_HSPA:
+                case TelephonyManager.NETWORK_TYPE_EVDO_B:   // api< 9: replace by 12
+                case TelephonyManager.NETWORK_TYPE_EHRPD:    // api<11: replace by 14
+                case TelephonyManager.NETWORK_TYPE_HSPAP:    // api<13: replace by 15
+                case TelephonyManager.NETWORK_TYPE_TD_SCDMA: // api<25: replace by 17
+                    format = String.format("3G / %s", manager.getNetworkOperatorName());
+                    return format;
+                case TelephonyManager.NETWORK_TYPE_LTE:      // api<11: replace by 13
+                case TelephonyManager.NETWORK_TYPE_IWLAN:    // api<25: replace by 18
+                case 19: // LTE_CA
+                    format = String.format("4G / %s", manager.getNetworkOperatorName());
+                    return format;
+                case TelephonyManager.NETWORK_TYPE_NR:       // api<29: replace by 20
+                    format = String.format("5G / %s", manager.getNetworkOperatorName());
+                    return format;
+                default:
+                    format = String.format("%s", manager.getNetworkOperatorName());
+                    return format;
+            }
+        }
+        format = String.format("%s", manager.getNetworkOperatorName());
+        return format;
+    }
+
+    public String getWifiName(Context context) {
+        WifiManager manager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        if (manager.isWifiEnabled()) {
+            WifiInfo wifiInfo = manager.getConnectionInfo();
+            if (wifiInfo != null) {
+                NetworkInfo.DetailedState state = WifiInfo.getDetailedStateOf(wifiInfo.getSupplicantState());
+                if (state == NetworkInfo.DetailedState.CONNECTED || state == NetworkInfo.DetailedState.OBTAINING_IPADDR) {
+                    return wifiInfo.getSSID();
+                }
+            }
+        }
+        return "NN";
+    }
+
+    private class WifiTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Latency.model.fetchLiveData();
+            return null;
+        }
+    }
+
+
+
 }
