@@ -117,7 +117,7 @@ public class Speed extends Activity {
              //Converting PyObject to String then json
                 try {
 
-                    Map<String, Object> map = new HashMap<>();
+                    Map<String, Object> map;
                    map = jsonToMap(String.valueOf(obj));
                    m.put("data",map);
                 } catch (JSONException e) {
@@ -172,9 +172,24 @@ public class Speed extends Activity {
         while( keys.hasNext() ) {
             String key = (String) keys.next();
             Object value = null;
-            if (key.equals("server") || key.equals("client")) {
 
-                map.put(key,jsonToMap(jObject.getString(key)));
+            if (key.equals("server") || key.equals("client")) {
+                HashMap<String, Object> map1 = new HashMap<>();
+                String t1 = jObject.getString(key);
+                JSONObject jObject1 = new JSONObject(t1);
+                Iterator<?> keys1 = jObject1.keys();
+                while( keys1.hasNext() ) {
+                    String key1 = (String) keys1.next();
+                    Object value1 = null;
+                        try {
+                            value1 = jObject1.getString(key1);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        map1.put(key1, value1);
+                        Log.i("normal map inside client/server map", String.valueOf(map1));
+                }
+                map.put(key,map1);
                 Log.i("map after client/server", String.valueOf(map));
             } else {
                 try {
