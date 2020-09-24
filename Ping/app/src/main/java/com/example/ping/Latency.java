@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -60,9 +61,19 @@ import java.util.TimeZone;
 
 import static java.lang.Integer.parseInt;
 
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStore;
+
+import com.example.ping.Wifi_Network_Info.model.WifiDataModel;
+import com.example.ping.Wifi_Network_Info.viewmodel.WifiViewModel;
+
 public class Latency extends AppCompatActivity {
     private static final String FILE_NAME = "ping.csv";
-    Context context;
+    static WifiViewModel model;
+   // static int doc_ser;
+    static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
     TableLayout tl;
     RelativeLayout tableLayout;
     TableRow tr;
@@ -91,6 +102,17 @@ public class Latency extends AppCompatActivity {
         Button exportButton = (Button) findViewById(R.id.exportPingButton);
         Button clearButton = (Button) findViewById(R.id.clearPingButton);
         progressBar = (ProgressBar) this.findViewById(R.id.progressbar);
+
+        //init instance of WifiViewModel
+        model = new ViewModelProvider(new ViewModelStore(), new ViewModelProvider.NewInstanceFactory()).get(WifiViewModel.class);
+        model.init();
+        final double[] value = {SystemClock.elapsedRealtime()};
+        model.getLiveData().observe(this, new Observer<WifiDataModel>() {
+            @Override
+            public void onChanged(WifiDataModel wifiDataModel) {
+                wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+            }
+        });
 
 
         /** Click Ping Button **/
@@ -152,6 +174,8 @@ public class Latency extends AppCompatActivity {
 
         @Override
         protected Void doInBackground(String[]... sites) {
+
+
             if(isCancelled())
             { Log.i("iscancelled","set to true"); return null;}
             String results;
@@ -203,6 +227,7 @@ public class Latency extends AppCompatActivity {
                         m.put("min",resList[4]);
                         m.put("avg",resList[5]);
                         m.put("max",resList[6]);
+
                         M.put("latency",m);
                         db.collection("latency").document(String.valueOf(doc_ser))
                                 .collection("metric").document(site[i]).set(M)
@@ -637,8 +662,8 @@ public class Latency extends AppCompatActivity {
 
     private void saveData(int doc_ser) {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yy | hh:mm:ss");
-        String lte;
-        String wifi;
+        final String[] lte = new String[1];
+        final String[] wifi = new String[1];
         String totalURLrange;
         if (this.sites != null) {
             totalURLrange = String.valueOf(this.sites.length);
@@ -648,34 +673,68 @@ public class Latency extends AppCompatActivity {
         String timestamp = simpleDateFormat.format(new Date());
 
         if (isWifi(this)) {
-            wifi = getWifiName(this);
-            lte = "NN";
+            new Thread(new Runnable() {
+               @Override
+                public void run() {
+                    WifiTask task = new WifiTask();
+                    task.execute();
+                    try {
+                        Thread.sleep(5000);
+                        wifi[0] = Latency.wifi_name;
+//                        System.out.println(wifi[0]);
+//                        System.out.println(SystemClock.elapsedRealtime());
+                        lte[0] = "NN";
+                        Map<String, Object> latency = new HashMap<>();
+                        latency.put("lteNetwork", lte[0]);
+                        latency.put("wifiNetwork", wifi[0]);
+                        latency.put("timestamp", timestamp);
+                        latency.put("totalURLRange", totalURLrange);
+                        latency.put("serial", String.valueOf(doc_ser));
+
+                        db.collection("latency").document(String.valueOf(doc_ser))
+                                .set(latency)
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("FIRESTORE", "Error writing document", e);
+                                    }
+                                });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
         } else {
-            wifi = "NN";
-            lte = getNetworkClass(this);
+            wifi[0] = "NN";
+            lte[0] = getNetworkClass(getApplicationContext());
+            Map<String, Object> latency = new HashMap<>();
+            latency.put("lteNetwork", lte[0]);
+            latency.put("wifiNetwork", wifi[0]);
+            latency.put("timestamp", timestamp);
+            latency.put("totalURLRange", totalURLrange);
+            latency.put("serial", String.valueOf(doc_ser));
+
+            db.collection("latency").document(String.valueOf(doc_ser))
+                    .set(latency)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w("FIRESTORE", "Error writing document", e);
+                        }
+                    });
         }
-
-        Map<String, Object> latency = new HashMap<>();
-        latency.put("lteNetwork", lte);
-        latency.put("wifiNetwork", wifi);
-        latency.put("timestamp", timestamp);
-        latency.put("totalURLRange", totalURLrange);
-        latency.put("serial", String.valueOf(doc_ser));
-
-        db.collection("latency").document(String.valueOf(doc_ser))
-                .set(latency)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("FIRESTORE", "Error writing document", e);
-                    }
-                });
 
     }
 
@@ -750,5 +809,15 @@ public class Latency extends AppCompatActivity {
         }
         return "NN";
     }
+
+    private class WifiTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Latency.model.fetchLiveData();
+            return null;
+        }
+    }
+
+
 
 }

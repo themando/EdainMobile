@@ -1053,6 +1053,7 @@ public class TraceActivity extends AppCompatActivity {
 	Random random = new Random();
 	static int doc_ser;
 
+
 	private TracerouteWithPing tracerouteWithPing;
 	private final int maxTtl = 999999999;
 	static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";

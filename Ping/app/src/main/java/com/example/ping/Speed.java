@@ -1,5 +1,6 @@
 package com.example.ping;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
@@ -10,6 +11,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,8 +20,18 @@ import android.widget.Toast;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Random;
 
 // Using Chaquopy: Python SDK for Android to execute run_speedtest.py
 // https://chaquo.com/chaquopy/
@@ -32,8 +44,18 @@ import java.io.File;
 
 public class Speed extends Activity {
     private static final String FILE_NAME = "speedtest.csv";
+    Random random = new Random();
+    int randomNumber = random.nextInt(999999999);
+    int doc_ser = randomNumber;
+    public JSONObject json;
+
+
     speedtest async = new speedtest();
-    ProgressBar progressBar;
+
+
+    /**
+     * Adding Firestore services:
+     */ FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +68,11 @@ public class Speed extends Activity {
         Button clearButton = (Button) findViewById(R.id.clearSpeedButton);
         final EditText classText = (EditText) findViewById(R.id.classEditText);
         final EditText intervText = (EditText) findViewById(R.id.intervalEditText);
-        progressBar = (ProgressBar) this.findViewById(R.id.progressbar);
+
+        // Warning toast, to alert user that this feature will take some time to complete
+        Toast toast = Toast.makeText(Speed.this, "Please wait after clicking on Speed- this will take 3-4 minutes!", Toast.LENGTH_LONG);
+        toast.setGravity(Gravity.CENTER,0,0);
+        toast.show();
 
 
         // Click Speed Button
@@ -60,7 +86,8 @@ public class Speed extends Activity {
 
                 // Invalid inputs - empty
                 if (classStr.isEmpty() || intervStr.isEmpty()) {
-                    return;
+                    classInt = 1;
+                    intervInt = 1;
                 } else {
                     classInt = Integer.parseInt(classStr);
                     intervInt = Integer.parseInt(intervStr);
@@ -73,16 +100,50 @@ public class Speed extends Activity {
                 }
 
                 // Run speed test
-                Toast.makeText(Speed.this, "Please wait, this will take 2-3 minutes!", Toast.LENGTH_LONG).show();
-                progressBar.setVisibility(View.VISIBLE);
-                Log.i("Before running python object","line 71");
+                Log.i("Speed.java","cli launch");
+//                String cmd = "/system/bin/speedtest-cli "+ "--json";
+//                Process p = executeCmd(cmd);
+//                Log.i("CLI", String.valueOf(p));
+
+
                 Python py = Python.getInstance();
-                Log.i("Before running PyObject","line 73");
                 PyObject pyf = py.getModule("run_speedtest");
-                Log.i("After running PyObject","line 75");
-                PyObject obj = pyf.callAttr("main", classInt, intervInt);
-                Log.i("After running obj","line 77");
-                Toast.makeText(Speed.this, "All done!!", Toast.LENGTH_SHORT).show();
+                pyf.callAttr("main", classInt, intervInt);
+                PyObject obj = pyf.callAttr("speedtest");
+                Log.i("printing obj", String.valueOf(obj));
+
+                Map<String, Object> m = new HashMap<>();
+
+             //Converting PyObject to String then json
+                try {
+
+                    Map<String, Object> map = new HashMap<>();
+                   map = jsonToMap(String.valueOf(obj));
+                   m.put("data",map);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            //Saving results to Firestore
+
+                Log.i("final map:", String.valueOf(m));
+
+                db.collection("speedtest").document(String.valueOf(doc_ser)).set(m)
+                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                Log.d("FIRESTORE", "DocumentSnapshot successfully written!");
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w("FIRESTORE", "Error writing document", e);
+                            }
+                        });
+                Log.i("Finished","line 77");
+
+                Toast.makeText(Speed.this, "All done!!", Toast.LENGTH_LONG).show();
 
             }
         });
@@ -102,6 +163,43 @@ public class Speed extends Activity {
                 export();
             }
         });
+    }
+    HashMap<String, Object> map = new HashMap<>();
+    public Map<String, Object> jsonToMap(String t) throws JSONException {
+        JSONObject jObject = new JSONObject(t);
+        Iterator<?> keys = jObject.keys();
+
+        while( keys.hasNext() ) {
+            String key = (String) keys.next();
+            Object value = null;
+            if (key.equals("server") || key.equals("client")) {
+
+                map.put(key,jsonToMap(jObject.getString(key)));
+                Log.i("map after client/server", String.valueOf(map));
+            } else {
+                try {
+                    value = jObject.getString(key);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                map.put(key, value);
+                Log.i("normal map", String.valueOf(map));
+            }
+        }
+
+        return map;
+    }
+
+    public static Process executeCmd(String cmd){
+        Process p = null;
+        try {
+            Runtime.getRuntime().exec("pip install speedtest-cli");
+            p = Runtime.getRuntime().exec(cmd);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d("EXECUTE", "Error executing command.");
+        }
+        return p;
     }
 
     // Remove csv file
@@ -135,7 +233,7 @@ public class Speed extends Activity {
             // This runs on the UI thread before the background thread executes.
             super.onPreExecute();
             // Do pre-thread tasks such as initializing variables.
-            progressBar.setVisibility(View.VISIBLE);
+
             Log.v("myBackgroundTask", "Starting Background Task");
         }
 
@@ -158,7 +256,7 @@ public class Speed extends Activity {
             // This function receives result(String results) returned from the doInBackground() method.
             // Update UI with the found string.
             super.onPostExecute(results);
-            progressBar.setVisibility(View.GONE);
+
             Toast.makeText(Speed.this, "All Done!", Toast.LENGTH_LONG).show();
         }
     }
