@@ -25,7 +25,7 @@ import retrofit2.http.Headers;
 interface WifiServiceInterface {
 
     @Headers("Content-Type: application/json")
-    @GET("/?token=390906bf82ff79")
+    @GET("/?token=88e9dd262b3a3f")
     Call<WifiDataModel> getData();
 }
 
