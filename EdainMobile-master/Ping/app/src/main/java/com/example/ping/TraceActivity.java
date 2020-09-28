@@ -1043,16 +1043,13 @@ public class TraceActivity extends AppCompatActivity {
 			"www.hexun.com",
 			"www.eff.org",
 			"www.uptodown.com"};
-
+	public static long doc_ser;
 	private Button buttonLaunch, buttonExport, buttonTranco;
 	private EditText editTextPing, editTextFile, editTrancoNum;
 	private ProgressBar progressBarPing;
 	private ListView listViewTraceroute;
 	private TraceListAdapter traceListAdapter;
 	private String fileName;
-	Random random = new Random();
-	static int doc_ser;
-
 
 	private TracerouteWithPing tracerouteWithPing;
 	private final int maxTtl = 999999999;
@@ -1116,8 +1113,8 @@ public class TraceActivity extends AppCompatActivity {
 					if (editTextFile.getText().length() != 0) {
 						fileName = String.valueOf(editTextFile.getText());
 					}
-					int randomNumber = random.nextInt(999999999);
-					doc_ser = randomNumber;
+					String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+					 doc_ser = Long.parseLong(datetime);
 					Toast.makeText(TraceActivity.this, "Trace routes will be saved at: \n" + getFilesDir() + "/" + fileName, Toast.LENGTH_SHORT).show();
 					traces.clear();
 					traceListAdapter.notifyDataSetChanged();
@@ -1144,8 +1141,8 @@ public class TraceActivity extends AppCompatActivity {
 					if (editTextFile.getText().length() != 0) {
 						fileName = String.valueOf(editTextFile.getText());
 					}
-					int randomNumber = random.nextInt(999999999);
-					doc_ser = randomNumber;
+					String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+					doc_ser = Long.parseLong(datetime);
 					ArrayList<String> sites = new ArrayList<>();
 					sites.addAll(Arrays.asList(TRANCO_TOP_10).subList(0, Integer.parseInt(String.valueOf(editTrancoNum.getText()))));
 					Toast.makeText(TraceActivity.this, "Trace routes will be saved to trace_ping.csv", Toast.LENGTH_SHORT).show();
