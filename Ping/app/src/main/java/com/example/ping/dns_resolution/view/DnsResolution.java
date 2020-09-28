@@ -620,13 +620,8 @@ public class DnsResolution extends Fragment {
             for (int i = 0; i < n; i++) {
                 // setting public dns no if the dns server for the network is a public dns server
                 data.put("pubic_dns", "no");
-                getIpAddress.getDnsStuff(top1000TrancoSites[i]);
-                Thread.sleep(200);
-                final HashMap<String, Object> hashMap = getIpAddress.getHashMap(top1000TrancoSites[i]);
-                getIpAddress.clear();
-                hashMap.put("resolved_time", hashMap.get("resolved_time"));
-                df[0].collection("metric").document(top1000TrancoSites[i]).set(hashMap);
-                Thread.sleep(200);
+                // get the dns resolution for url = top1000TrancoSites[i];
+                getIpAddress.getDnsStuff(top1000TrancoSites[i], df[0]);
             }
         } else {
             // setting public dns yes if the dns server for the network is a public dns server

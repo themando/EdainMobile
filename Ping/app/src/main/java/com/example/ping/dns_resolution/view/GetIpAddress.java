@@ -5,7 +5,10 @@ import android.net.ConnectivityManager;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.SystemClock;
+
+import com.google.firebase.firestore.DocumentReference;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -23,8 +26,6 @@ import java.util.List;
 public class GetIpAddress {
     String dnsServer;
     Context context;
-    double resolved_time = 0.0;
-    boolean do_resolved_time = false;
     HashMap<String, Object> hashMap = new HashMap<>();
 
     GetIpAddress(Context context) {
@@ -32,9 +33,6 @@ public class GetIpAddress {
         ArrayList<String> list = new ArrayList<>();
         hashMap.put("resolved_ipv4", "NaN");
         hashMap.put("resolved_ipv6", "NaN");
-        hashMap.put("resolved_time_ipv4", "NaN");
-        hashMap.put("resolved_time_ipv6", "NaN");
-        hashMap.put("resolved_time", "NaN");
     }
 
     // method for getting the ip address of dns server of our network connection
@@ -59,179 +57,212 @@ public class GetIpAddress {
         dnsServer = builder.toString();
     }
 
-    // method for getting the ip addresses and resolution time
-
-    public void getDnsStuff(final String url) throws SocketException {
+    // method for getting the ip addresses and resolution time by calling DnsResolutionTask
+    public void getDnsStuff(final String url, final DocumentReference docId) throws SocketException {
         final DatagramSocket socket = new DatagramSocket();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                byte[] encodedPacket;
-                try {
-                    DatagramPacket sendPacket;
-                    int n_ipv4 = 0, n_ipv6 = 0;
-                    boolean isipv6Available = false;
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (inetAddress instanceof Inet6Address) {
-                            isipv6Available = true;
-                            n_ipv6++;
-                        } else {
-                            n_ipv4++;
-                        }
+        DnsResolutionTask task = new DnsResolutionTask(url, docId);
+        task.execute();
+    }
+
+    // task for fetching dns resolution results asynchronously
+    private class DnsResolutionTask extends AsyncTask<Void, Void, Void> {
+        String url;
+        DocumentReference docId;
+        double resolved_time = 0.0;
+        boolean do_resolved_time = false;
+        HashMap<String, Object> hashMap = new HashMap<>();
+
+        DnsResolutionTask(String url, DocumentReference docId) {
+            this.url = url;
+            this.docId = docId;
+            hashMap.put("resolved_ipv4", "NaN");
+            hashMap.put("resolved_ipv6", "NaN");
+            hashMap.put("resolved_time_ipv4", "NaN");
+            hashMap.put("resolved_time_ipv6", "NaN");
+            hashMap.put("resolved_time", "NaN");
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            DatagramSocket socket = null;
+            try {
+                socket = new DatagramSocket();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            byte[] encodedPacket;
+            try {
+                DatagramPacket sendPacket;
+                int n_ipv4 = 0, n_ipv6 = 0;
+                boolean isipv6Available = false;
+                InetAddress[] inetAddresses = InetAddress.getAllByName(url);
+                for (InetAddress inetAddress : inetAddresses) {
+                    if (inetAddress instanceof Inet6Address) {
+                        isipv6Available = true;
+                        n_ipv6++;
+                    } else {
+                        n_ipv4++;
                     }
-                    encodedPacket = encodeHost(url, "\u0001");
-                    sendPacket = new DatagramPacket(encodedPacket, encodedPacket.length, InetAddress.getByName(dnsServer.trim()), 53);
-                    socket.send(sendPacket);
+                }
+                encodedPacket = encodeHost(url, "\u0001");
+                sendPacket = new DatagramPacket(encodedPacket, encodedPacket.length, InetAddress.getByName(dnsServer.trim()), 53);
+                socket.send(sendPacket);
 
-                    byte[] buf = new byte[512];
-                    DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
+                byte[] buf = new byte[512];
+                DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
-                    double currentTime = SystemClock.elapsedRealtime();
-                    socket.setSoTimeout(1000);
-                    socket.receive(receivePacket);
-                    double now = SystemClock.elapsedRealtime() - currentTime;
-                    now = now / 1000;
-                    resolved_time = now;
-                    do_resolved_time = true;
+                double currentTime = SystemClock.elapsedRealtime();
+                socket.setSoTimeout(1000);
+                socket.receive(receivePacket);
+                double now = SystemClock.elapsedRealtime() - currentTime;
+                now = now / 1000;
+                resolved_time = now;
+                do_resolved_time = true;
 
-                    int[] bufUnsigned = new int[receivePacket.getLength()];
-                    for (int x = 0; x < receivePacket.getLength(); x++) {
-                        bufUnsigned[x] = (int) receivePacket.getData()[x] & 0xFF;
-                    }
+                int[] bufUnsigned = new int[receivePacket.getLength()];
+                for (int x = 0; x < receivePacket.getLength(); x++) {
+                    bufUnsigned[x] = (int) receivePacket.getData()[x] & 0xFF;
+                }
 
 //                    for (int i = 0; i < bufUnsigned.length; i++) {
 //                        System.out.println(bufUnsigned[i]);
 //                    }
 //                    System.out.println(bufUnsigned.length);
-                    decodePacket(bufUnsigned, "A", encodedPacket, now, n_ipv4);
+                decodePacket(bufUnsigned, "A", encodedPacket, now, n_ipv4);
 
 
-                    if (isipv6Available) {
-                        encodedPacket = encodeHost(url, "\u001c");
-                        sendPacket = new DatagramPacket(encodedPacket, encodedPacket.length, InetAddress.getByName(dnsServer.trim()), 53);
-                        socket.send(sendPacket);
+                if (isipv6Available) {
+                    encodedPacket = encodeHost(url, "\u001c");
+                    sendPacket = new DatagramPacket(encodedPacket, encodedPacket.length, InetAddress.getByName(dnsServer.trim()), 53);
+                    socket.send(sendPacket);
 
-                        buf = new byte[512];
-                        receivePacket = new DatagramPacket(buf, buf.length);
+                    buf = new byte[512];
+                    receivePacket = new DatagramPacket(buf, buf.length);
 
-                        currentTime = SystemClock.elapsedRealtime();
-                        socket.setSoTimeout(1000);
-                        socket.receive(receivePacket);
-                        now = SystemClock.elapsedRealtime() - currentTime;
-                        now = now / 1000;
-                        resolved_time = resolved_time + now;
+                    currentTime = SystemClock.elapsedRealtime();
+                    socket.setSoTimeout(1000);
+                    socket.receive(receivePacket);
+                    now = SystemClock.elapsedRealtime() - currentTime;
+                    now = now / 1000;
+                    resolved_time = resolved_time + now;
 //                        System.out.println(resolved_time);
 
-                        bufUnsigned = new int[receivePacket.getLength()];
-                        for (int x = 0; x < receivePacket.getLength(); x++) {
-                            bufUnsigned[x] = (int) receivePacket.getData()[x] & 0xFF;
+                    bufUnsigned = new int[receivePacket.getLength()];
+                    for (int x = 0; x < receivePacket.getLength(); x++) {
+                        bufUnsigned[x] = (int) receivePacket.getData()[x] & 0xFF;
+                    }
+
+                    decodePacket(bufUnsigned, "AAAA", encodedPacket, now, n_ipv6);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            socket.close();
+            socket.disconnect();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            final HashMap<String, Object> hashMap = getHashMap(url);
+            clear();
+            hashMap.put("resolved_time", hashMap.get("resolved_time"));
+            docId.collection("metric").document(url).set(hashMap);
+        }
+
+        // method for encoding the url based on the DNS Protocol
+
+        private byte[] encodeHost(String host, String record) {
+            String TransactionID1 = "Q1";
+            String TypeString = "\u0001" + "\u0000" + "\u0000" + "\u0001" + "\u0000" + "\u0000" + "\u0000" + "\u0000" + "\u0000" + "\u0000";
+            String TrailerString = "\u0000" + "\u0000" + record + "\u0000" + "\u0001";
+            String URLNameStart = host.substring(0, host.indexOf("."));
+            String DomainName = host.substring(host.indexOf(".") + 1);
+            String QueryString = TransactionID1 + TypeString + (char) URLNameStart.length() + URLNameStart + (char) DomainName.length() + DomainName + TrailerString;
+
+            byte[] buffer;
+            buffer = QueryString.getBytes(StandardCharsets.US_ASCII);
+            return buffer;
+        }
+
+        // method for decoding the response of recieved datagram packet
+
+        public void decodePacket(int[] bytesList, String recordType, byte[] sentBytes, Double time, int n) throws UnknownHostException {
+            int index = 0;
+            if (bytesList[0] == sentBytes[0] && (bytesList[1] == 0x31) || (bytesList[1] == 0x32)) {
+                if (bytesList[2] == 0x81 && bytesList[3] == 0x80) {
+
+                    // Decode the answers
+                    if (recordType.equals("A")) {
+
+                        int listLenght = bytesList.length;
+                        index = listLenght - 1;
+
+                        ArrayList<String> list = new ArrayList<>();
+                        while (n > 0 && index > 0) {
+                            String builder = bytesList[index - 3] + "." + bytesList[index - 2] +
+                                    "." + bytesList[index - 1] + "." + bytesList[index];
+                            list.add(builder);
+//                        System.out.println(builder);
+                            index = index - 3;
+                            index = index - 13;
+                            n--;
                         }
 
-                        decodePacket(bufUnsigned, "AAAA", encodedPacket, now, n_ipv6);
+                        hashMap.put("resolved_ipv4", list);
+                        hashMap.put("resolved_time_ipv4", time);
+                    } else {
+                        int listLenght = bytesList.length;
+                        index = listLenght - 1;
+                        ArrayList<String> list = new ArrayList<>();
+                        while (n > 0 && index > 0) {
+                            ArrayList<String> builder = new ArrayList<String>();
+                            builder.add(convertToHex(bytesList[index - 15], bytesList[index + 1 - 15]));
+                            builder.add(convertToHex(bytesList[index + 2 - 15], bytesList[index + 3 - 15]));
+                            builder.add(convertToHex(bytesList[index + 4 - 15], bytesList[index + 5 - 15]));
+                            builder.add(convertToHex(bytesList[index + 6 - 15], bytesList[index + 7 - 15]));
+                            builder.add(convertToHex(bytesList[index + 8 - 15], bytesList[index + 9 - 15]));
+                            builder.add(convertToHex(bytesList[index + 10 - 15], bytesList[index + 11 - 15]));
+                            builder.add(convertToHex(bytesList[index + 12 - 15], bytesList[index + 13 - 15]));
+                            builder.add(convertToHex(bytesList[index + 14 - 15], bytesList[index + 15 - 15]));
+
+                            String builder1 = scaleToIpv6(builder);
+                            list.add(builder1);
+                            index = index - 15;
+                            index = index - 13;
+                            n--;
+                        }
+
+                        hashMap.put("resolved_ipv6", list);
+                        hashMap.put("resolved_time_ipv6", time);
                     }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                socket.close();
-                socket.disconnect();
-            }
-        }).start();
-    }
-
-    // method for encoding the url based on the DNS Protocol
-
-    private byte[] encodeHost(String host, String record) {
-        String TransactionID1 = "Q1";
-        String TypeString = "\u0005" + "\u0000" + "\u0000" + "\u0001" + "\u0000" + "\u0000" + "\u0000" + "\u0000" + "\u0000" + "\u0000";
-        String TrailerString = "\u0000" + "\u0000" + record + "\u0000" + "\u0001";
-        String URLNameStart = host.substring(0, host.indexOf("."));
-        String DomainName = host.substring(host.indexOf(".") + 1);
-        String QueryString = TransactionID1 + TypeString + (char) URLNameStart.length() + URLNameStart + (char) DomainName.length() + DomainName + TrailerString;
-
-        byte[] buffer;
-        buffer = QueryString.getBytes(StandardCharsets.US_ASCII);
-        return buffer;
-    }
-
-    // method for decoding the response of recieved datagram packet
-
-    public void decodePacket(int[] bytesList, String recordType, byte[] sentBytes, Double time, int n) throws UnknownHostException {
-        int index = 0;
-        if (bytesList[0] == sentBytes[0] && (bytesList[1] == 0x31) || (bytesList[1] == 0x32)) {
-            if (bytesList[2] == 0x81 && bytesList[3] == 0x80) {
-
-                // Decode the answers
-                if (recordType.equals("A")) {
-
-                    int listLenght = bytesList.length;
-                    index = listLenght - 1;
-
-                    ArrayList<String> list = new ArrayList<>();
-                    while (n > 0 && index > 0) {
-                        String builder = bytesList[index - 3] + "." + bytesList[index - 2] +
-                                "." + bytesList[index - 1] + "." + bytesList[index];
-                        list.add(builder);
-//                        System.out.println(builder);
-                        index = index - 3;
-                        index = index - 13;
-                        n--;
-                    }
-
-                    hashMap.put("resolved_ipv4", list);
-                    hashMap.put("resolved_time_ipv4", time);
-                } else {
-                    int listLenght = bytesList.length;
-                    index = listLenght - 1;
-                    ArrayList<String> list = new ArrayList<>();
-                    while (n > 0 && index > 0) {
-                        ArrayList<String> builder = new ArrayList<String>();
-                        builder.add(convertToHex(bytesList[index - 15], bytesList[index + 1 - 15]));
-                        builder.add(convertToHex(bytesList[index + 2 - 15], bytesList[index + 3 - 15]));
-                        builder.add(convertToHex(bytesList[index + 4 - 15], bytesList[index + 5 - 15]));
-                        builder.add(convertToHex(bytesList[index + 6 - 15], bytesList[index + 7 - 15]));
-                        builder.add(convertToHex(bytesList[index + 8 - 15], bytesList[index + 9 - 15]));
-                        builder.add(convertToHex(bytesList[index + 10 - 15], bytesList[index + 11 - 15]));
-                        builder.add(convertToHex(bytesList[index + 12 - 15], bytesList[index + 13 - 15]));
-                        builder.add(convertToHex(bytesList[index + 14 - 15], bytesList[index + 15 - 15]));
-
-                        String builder1 = scaleToIpv6(builder);
-                        list.add(builder1);
-                        index = index - 15;
-                        index = index - 13;
-                        n--;
-                    }
-
-                    hashMap.put("resolved_ipv6", list);
-                    hashMap.put("resolved_time_ipv6", time);
                 }
             }
         }
-    }
 
-    // method for getting the map containing ip addresses and resolved time
+        // method for getting the map containing ip addresses and resolved time
+        public HashMap<String, Object> getHashMap(String url) {
+            hashMap.put("resolved_time", resolved_time);
+            if (do_resolved_time) {
+                resolved_time = 0.0;
+            }
+            return hashMap;
+        }
 
-    public HashMap<String, Object> getHashMap(String url) throws UnknownHostException {
-        hashMap.put("resolved_time", resolved_time);
-        if (do_resolved_time) {
+        // method for clearing the class variables
+
+        public void clear() {
+            hashMap = new HashMap<>();
+            hashMap.put("resolved_ipv4", "NaN");
+            hashMap.put("resolved_ipv6", "NaN");
+            hashMap.put("resolved_time_ipv4", "NaN");
+            hashMap.put("resolved_time_ipv6", "NaN");
+            hashMap.put("resolved_time", "NaN");
             resolved_time = 0.0;
+            do_resolved_time = false;
         }
-        return hashMap;
-    }
-
-    // method for clearing the class variables
-
-    public void clear() {
-        hashMap = new HashMap<>();
-        hashMap.put("resolved_ipv4", "NaN");
-        hashMap.put("resolved_ipv6", "NaN");
-        hashMap.put("resolved_time_ipv4", "NaN");
-        hashMap.put("resolved_time_ipv6", "NaN");
-        hashMap.put("resolved_time", "NaN");
-        resolved_time = 0.0;
-        do_resolved_time = false;
     }
 
     // method for converting decoded ipv6 address to hex string
@@ -312,3 +343,7 @@ public class GetIpAddress {
         return Arrays.binarySearch(ipaddress, dnsServer) >= 0;
     }
 }
+
+
+
+
