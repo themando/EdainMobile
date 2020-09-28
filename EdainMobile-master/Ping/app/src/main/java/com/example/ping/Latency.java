@@ -1220,12 +1220,13 @@ public class Latency extends AppCompatActivity {
                     if (pingStats != null) {
                         results = pingStats;
                         Log.i("results after pinging Tranco site", results);
-                        writeCsv(results, site.get(i), "1");
+                        writeCsv(results, site.get(i), "7");
 
                         String[] resList = results.split(",");
                         m.put("min",resList[4]);
                         m.put("avg",resList[5]);
                         m.put("max",resList[6]);
+                        m.put("std dev.", resList[7]);
 
                         M.put("latency",m);
                         db.collection("latency").document(String.valueOf(doc_ser))
