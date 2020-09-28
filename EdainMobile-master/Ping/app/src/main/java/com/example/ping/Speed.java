@@ -28,6 +28,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -44,14 +46,9 @@ import java.util.Random;
 
 public class Speed extends Activity {
     private static final String FILE_NAME = "speedtest.csv";
-    Random random = new Random();
-    int randomNumber = random.nextInt(999999999);
-    int doc_ser = randomNumber;
-    public JSONObject json;
 
-
-    speedtest async = new speedtest();
-
+    String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+    long doc_ser = Long.parseLong(datetime);
 
     /**
      * Adding Firestore services:
@@ -70,7 +67,7 @@ public class Speed extends Activity {
         final EditText intervText = (EditText) findViewById(R.id.intervalEditText);
 
         // Warning toast, to alert user that this feature will take some time to complete
-        Toast toast = Toast.makeText(Speed.this, "Please wait after clicking on Speed- this will take 3-4 minutes!", Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(Speed.this, "Please wait after clicking on Speed- this will take 1-2 minutes!", Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER,0,0);
         toast.show();
 
@@ -91,7 +88,6 @@ public class Speed extends Activity {
                 } else {
                     classInt = Integer.parseInt(classStr);
                     intervInt = Integer.parseInt(intervStr);
-
                 }
 
                 // Invalid inputs - values
@@ -100,24 +96,16 @@ public class Speed extends Activity {
                 }
 
                 // Run speed test
-                Log.i("Speed.java","cli launch");
-//                String cmd = "/system/bin/speedtest-cli "+ "--json";
-//                Process p = executeCmd(cmd);
-//                Log.i("CLI", String.valueOf(p));
-
-
                 Python py = Python.getInstance();
                 PyObject pyf = py.getModule("run_speedtest");
-                pyf.callAttr("main", classInt, intervInt);
-                PyObject obj = pyf.callAttr("speedtest");
+                PyObject obj = pyf.callAttr("main", classInt, intervInt);
                 Log.i("printing obj", String.valueOf(obj));
 
                 Map<String, Object> m = new HashMap<>();
 
              //Converting PyObject to String then json
                 try {
-
-                    Map<String, Object> map;
+                   Map<String, Object> map;
                    map = jsonToMap(String.valueOf(obj));
                    m.put("data",map);
                 } catch (JSONException e) {
@@ -203,18 +191,6 @@ public class Speed extends Activity {
         }
 
         return map;
-    }
-
-    public static Process executeCmd(String cmd){
-        Process p = null;
-        try {
-            Runtime.getRuntime().exec("pip install speedtest-cli");
-            p = Runtime.getRuntime().exec(cmd);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.d("EXECUTE", "Error executing command.");
-        }
-        return p;
     }
 
     // Remove csv file

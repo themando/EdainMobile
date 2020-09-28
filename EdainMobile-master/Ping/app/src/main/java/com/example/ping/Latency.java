@@ -1157,9 +1157,8 @@ public class Latency extends AppCompatActivity {
     public class PingTrancoSites extends AsyncTask< ArrayList<String>, String, Void> {
         Map<String, Object> m = new HashMap<>();
         Map<String,Object> M = new HashMap<>();
-             Random random = new Random();
-             int randomNumber = random.nextInt(999999999);
-             int doc_ser = randomNumber;
+             String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+             long doc_ser = Long.parseLong(datetime);
 
              @Override
              protected void onPreExecute(){
@@ -1660,7 +1659,7 @@ public class Latency extends AppCompatActivity {
 
     }
 
-    private void saveData(int doc_ser) {
+    private void saveData(long doc_ser) {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yy | hh:mm:ss");
         final String[] lte = new String[1];
         final String[] wifi = new String[1];
