@@ -263,7 +263,7 @@ public class DnsResolution extends Fragment {
                                 public void run() {
                                     // Reset Progress Bar
                                     progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top" +n + "Tranco Sites stored in Firestore", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "DNS Data for Top " + n +  " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }

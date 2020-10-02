@@ -120,6 +120,8 @@ public class GetIpAddress {
                 resolved_time = now;
                 do_resolved_time = true;
 
+                Thread.sleep(1000);
+
                 int[] bufUnsigned = new int[receivePacket.getLength()];
                 for (int x = 0; x < receivePacket.getLength(); x++) {
                     bufUnsigned[x] = (int) receivePacket.getData()[x] & 0xFF;
@@ -148,6 +150,7 @@ public class GetIpAddress {
                     socket.receive(receivePacket);
                     now = SystemClock.elapsedRealtime() - currentTime;
                     now = now / 1000;
+                    Thread.sleep(1000);
                     resolved_time = resolved_time + now;
 //                        System.out.println(resolved_time);
 
@@ -159,7 +162,7 @@ public class GetIpAddress {
                     decodePacket(bufUnsigned, "AAAA", encodedPacket, now, n_ipv6);
                 }
 
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
 
