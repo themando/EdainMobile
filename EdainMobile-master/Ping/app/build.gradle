@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 apply plugin: 'com.chaquo.python'
-apply plugin: 'com.google.gms.google-services'
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -19,7 +19,7 @@ android {
             abiFilters "armeabi-v7a", "x86"
         }
         python {
-            buildPython "C:\\Users\\Administrator.TEST4\\AppData\\Local\\Programs\\Python\\Python37\\python.exe"
+            buildPython "/usr/local/bin/python3"
             pip {
                 install "selenium"
                 install "speedtest-cli"
@@ -65,8 +65,6 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-analytics:17.5.0'
-    implementation 'com.google.firebase:firebase-firestore:21.6.0'
     implementation 'com.google.guava:guava:28.2-android'
     implementation 'com.google.apis:google-api-services-pagespeedonline:v5-rev20200305-1.30.9'
     implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
@@ -81,5 +79,4 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment:2.3.0'
     implementation 'androidx.navigation:navigation-ui:2.3.0'
     implementation 'com.google.android:flexbox:2.0.1'
-    implementation 'com.jaredrummler:android-shell:1.0.0'
 }
