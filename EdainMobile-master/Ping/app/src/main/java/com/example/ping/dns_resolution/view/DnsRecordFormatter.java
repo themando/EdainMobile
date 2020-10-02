@@ -5,6 +5,7 @@ import android.content.Context;
 import com.example.ping.dns_resolution.model.DnsModel;
 import com.example.ping.dns_resolution.model.DnsRecordData;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -102,7 +103,7 @@ public class DnsRecordFormatter {
         if (model.getRecordData() != null && model.getRecordData().size() != 0) {
             list = getIPAddressList(model.getRecordData().get(0).getName().substring(0, model.getRecordData().get(0).getName().length() - 1));
         }
-        for (int i = 0; i < (model.getRecordData() != null ? Math.min(model.getRecordData().size(),list.size()) : 0); i++) {
+        for (int i = 0; i < (model.getRecordData() != null ? Math.min(model.getRecordData().size(), list.size()) : 0); i++) {
             String val = list.get(i);
             val = val.replaceAll("\\s", ",");
             val += "\n";
@@ -177,7 +178,7 @@ public class DnsRecordFormatter {
             stringBuilder.append(e.getMessage());
         }
 
-        System.out.println(stringBuilder.toString());
+//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -186,20 +187,14 @@ public class DnsRecordFormatter {
         ArrayList<String> list = new ArrayList<>();
 //        System.out.println(url);
 
-        GetIpAddress getIpAddress = new GetIpAddress(context);
-        getIpAddress.getDnsServer();
         try {
-            getIpAddress.getDnsStuff(url);
-            Thread.sleep(200);
-            final HashMap<String, Object> hashMap = getIpAddress.getHashMap(url);
-            if (hashMap.get("resolved_ipv4") != "NaN") {
-                ArrayList<String> ipv4 = (ArrayList<String>) hashMap.get("resolved_ipv4");
-                assert ipv4 != null;
-                list.addAll(ipv4);
-            } else {
-                list.add("NaN");
+            InetAddress[] inetAddress = InetAddress.getAllByName(url);
+            for (InetAddress inetAddress1 : inetAddress) {
+                if (inetAddress1 instanceof Inet4Address) {
+                    list.add(inetAddress1.getHostAddress());
+                }
             }
-        } catch (SocketException | UnknownHostException | InterruptedException e) {
+        } catch (UnknownHostException e) {
             e.printStackTrace();
             list.add("NaN");
         }
