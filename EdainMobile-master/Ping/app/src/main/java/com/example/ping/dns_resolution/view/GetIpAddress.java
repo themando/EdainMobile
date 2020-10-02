@@ -101,20 +101,14 @@ public class GetIpAddress {
                     }
                 }
 
-                if(!isipv6Available){
-                  Inet6Address[] inet6Addresses = (Inet6Address[]) Inet6Address.getAllByName(url);
-                  n_ipv6 = inet6Addresses.length;
-                  if(n_ipv6>0){
-                      isipv6Available=true;
-                  }
-                }
-
+                // send packets
                 byte[] encodedPacket;
                 encodedPacket = encodeHost(url, "\u0001");
                 sendPacket = new DatagramPacket(encodedPacket, encodedPacket.length, InetAddress.getByName(dnsServer.trim()), 53);
                 assert socket != null;
                 socket.send(sendPacket);
 
+                // receive packets
                 byte[] buf = new byte[512];
                 DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
 
@@ -125,6 +119,7 @@ public class GetIpAddress {
                 now = now / 1000;
                 resolved_time = now;
                 do_resolved_time = true;
+
                 Thread.sleep(1000);
 
                 int[] bufUnsigned = new int[receivePacket.getLength()];
