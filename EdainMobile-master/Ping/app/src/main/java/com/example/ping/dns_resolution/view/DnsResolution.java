@@ -206,7 +206,7 @@ public class DnsResolution extends Fragment {
                                 public void run() {
                                     // Reset Progress Bar
                                     progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top N Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "DNS Data for Top " + n +  " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -263,7 +263,7 @@ public class DnsResolution extends Fragment {
                                 public void run() {
                                     // Reset Progress Bar
                                     progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top N Tranco Sites stored in Firestore", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "DNS Data for Top" +n + "Tranco Sites stored in Firestore", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -609,25 +609,19 @@ public class DnsResolution extends Fragment {
 
         // checks whether the dns server associated with our network connection is public or not
         if (!getIpAddress.checkPublicDns()) {
+            // setting public dns no if the dns server for the network is a public dns server
+            data.put("pubic_dns", "no");
             final DocumentReference[] df = new DocumentReference[1];
             db.collection("dns_resolve").add(data).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
                 @Override
                 public void onComplete(@NonNull Task<DocumentReference> task) {
                     df[0] = task.getResult();
+                    for (int i = 0; i < n; i++) {
+                        // get the dns resolution for url = top1000TrancoSites[i];
+                        getIpAddress.getDnsStuff(top1000TrancoSites[i], df[0]);
+                    }
                 }
             });
-            Thread.sleep(2000);
-            for (int i = 0; i < n; i++) {
-                // setting public dns no if the dns server for the network is a public dns server
-                data.put("pubic_dns", "no");
-                getIpAddress.getDnsStuff(top1000TrancoSites[i]);
-                Thread.sleep(200);
-                final HashMap<String, Object> hashMap = getIpAddress.getHashMap(top1000TrancoSites[i]);
-                getIpAddress.clear();
-                hashMap.put("resolved_time", hashMap.get("resolved_time"));
-                df[0].collection("metric").document(top1000TrancoSites[i]).set(hashMap);
-                Thread.sleep(200);
-            }
         } else {
             // setting public dns yes if the dns server for the network is a public dns server
             data.put("pubic_dns", "yes");
