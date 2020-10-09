@@ -1086,11 +1086,12 @@ public class TraceActivity extends AppCompatActivity {
 		model.getLiveData().observe(this, new Observer<WifiDataModel>() {
 			@Override
 			public void onChanged(WifiDataModel wifiDataModel) {
-				wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
-//				System.out.println(wifi_name);
-//				System.out.println(SystemClock.elapsedRealtime());
-//				value[0] = SystemClock.elapsedRealtime()- value[0];
-//				System.out.println(value[0]);
+				if(wifiDataModel.getCompany() != null) {
+					wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+				}
+				else{
+					wifi_name = wifiDataModel.getOrg();
+				}
 			}
 		});
 
