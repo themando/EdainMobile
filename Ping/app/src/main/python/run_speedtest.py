@@ -7,8 +7,6 @@
 import os.path
 import speedtest as speed_script
 
-
-
 import csv
 import json
 import time
@@ -72,4 +70,5 @@ def main(class_duration, interval):
         json_data = speedtest()
         row_metrics = json_parser(json_data)
         write_csv(row_metrics)
-        sleep_minutes(interval)
+        #sleep_minutes(interval)
+        return json_data

@@ -26,14 +26,12 @@ public class DnsRecordFormatter {
         assert model != null;
         if (model.getRecordData() != null && model.getRecordData().size() != 0) {
             list = getIPAddressList(model.getRecordData().get(0).getName().substring(0, model.getRecordData().get(0).getName().length() - 1));
-//            System.out.println(model.getRecordData().get(0).getName());
         }
         for (int i = 0; i < (model.getRecordData() != null ? Math.min(model.getRecordData().size(), list.size()) : 0); i++) {
             DnsRecordData recordData = model.getRecordData().get(i);
             stringBuilder.append(recordData.getName()).append("/").append(list.get(i)).append("\n");
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -51,7 +49,6 @@ public class DnsRecordFormatter {
             stringBuilder.append("Expire               ").append(val[5]).append("\n");
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -65,7 +62,6 @@ public class DnsRecordFormatter {
             stringBuilder.append(getIPAddress(val[1])).append("          ").append("Preferences:").append(val[0]).append("\n\n");
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -79,7 +75,6 @@ public class DnsRecordFormatter {
             stringBuilder.append(getIPAddress(val)).append("\n\n");
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -92,7 +87,6 @@ public class DnsRecordFormatter {
             stringBuilder.append(val).append("\n\n");
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
@@ -178,14 +172,12 @@ public class DnsRecordFormatter {
             stringBuilder.append(e.getMessage());
         }
 
-//        System.out.println(stringBuilder.toString());
         return stringBuilder.toString();
     }
 
     // method for getting list of resolved IP addresses
     public ArrayList<String> getIPAddressList(String url) {
         ArrayList<String> list = new ArrayList<>();
-//        System.out.println(url);
 
         try {
             InetAddress[] inetAddress = InetAddress.getAllByName(url);
