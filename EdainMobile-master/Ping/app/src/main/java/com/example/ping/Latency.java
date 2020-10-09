@@ -1101,7 +1101,12 @@ public class Latency extends AppCompatActivity {
         model.getLiveData().observe(this, new Observer<WifiDataModel>() {
             @Override
             public void onChanged(WifiDataModel wifiDataModel) {
-                wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                if(wifiDataModel.getCompany() != null) {
+                    wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                }
+                else{
+                    wifi_name = wifiDataModel.getOrg();
+                }
             }
         });
 
