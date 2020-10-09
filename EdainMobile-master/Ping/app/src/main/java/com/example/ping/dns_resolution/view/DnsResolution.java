@@ -71,7 +71,7 @@ public class DnsResolution extends Fragment {
     String wifiNetworkName = "Time Limit Exceeded to get Wifi Network from API";
     WifiViewModel model;
 
-    // val for deciding whether we want Top N Tranco Site Data or Data for URL
+    // val for deciding whether we want (Top N Tranco Site Data) or (Data for URL)
     boolean val = false;
 
     @Nullable
@@ -88,7 +88,6 @@ public class DnsResolution extends Fragment {
         nsRecord = view.findViewById(R.id.nsRecord);
         txtRecord = view.findViewById(R.id.txtRecord);
         pingButton = view.findViewById(R.id.dnsPingButton);
-        addButton = view.findViewById(R.id.dnsAddButton);
         exportButton = view.findViewById(R.id.dnsExportButton);
         clearButton = view.findViewById(R.id.dnsClearButton);
         trancoButton = view.findViewById(R.id.dnsTrancoButton);
@@ -148,14 +147,6 @@ public class DnsResolution extends Fragment {
             }
         });
 
-        // Click Add Button
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                writeCsv(output);
-            }
-        });
-
         // Click Export Button
         exportButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -183,7 +174,7 @@ public class DnsResolution extends Fragment {
                     scrollView.setVisibility(View.INVISIBLE);
                     progressBar.setVisibility(View.VISIBLE);
 
-                    //  number of tranco sites taken as input
+                    //  number of Tranco Sites taken as input
                     final int n = Integer.parseInt(s);
 
                     final Handler handler = new Handler();
@@ -206,7 +197,7 @@ public class DnsResolution extends Fragment {
                                 public void run() {
                                     // Reset Progress Bar
                                     progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top " + n +  " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "DNS Data for Top " + n + " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -245,7 +236,7 @@ public class DnsResolution extends Fragment {
 
                     final int n = Integer.parseInt(s);
 
-                    //  number of tranco sites taken as input
+                    // number of Tranco Sites taken as input
                     final Handler handler = new Handler();
 
                     new Thread(new Runnable() {
@@ -254,7 +245,7 @@ public class DnsResolution extends Fragment {
                             try {
                                 // store the data retrieved to firestore
                                 storeToFireStore(n);
-                            } catch (IOException | InterruptedException e) {
+                            } catch (InterruptedException e) {
                                 e.printStackTrace();
                                 Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                             }
@@ -263,7 +254,7 @@ public class DnsResolution extends Fragment {
                                 public void run() {
                                     // Reset Progress Bar
                                     progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top " + n +  " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), "DNS Data for Top " + n + " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -312,7 +303,11 @@ public class DnsResolution extends Fragment {
         model.getLiveData().observe(this, new Observer<WifiDataModel>() {
             @Override
             public void onChanged(WifiDataModel wifiDataModel) {
-                wifiNetworkName = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                if (wifiDataModel.getCompany() != null) {
+                    wifiNetworkName = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                } else {
+                    wifiNetworkName = wifiDataModel.getOrg();
+                }
             }
         });
 
@@ -328,7 +323,7 @@ public class DnsResolution extends Fragment {
                 // init DnsRecordFormatter
                 DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(context);
 
-                // Checking if we have Click on Ping Button
+                // Checking if we have Clicked on Ping Button
                 if (!val) {
                     // Setting the Record TexView when we click on PING
                     aRecord.setText(dnsRecordFetcher.aRecord(dnsModel));
@@ -350,7 +345,7 @@ public class DnsResolution extends Fragment {
                 // init DnsRecordFormatter
                 DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(context);
 
-                // Checking if we have Click on Ping Button
+                // Checking if we have Clicked on Ping Button
                 if (!val) {
                     // Setting the Record TexView when we click on PING
                     soaRecord.setText(dnsRecordFetcher.soaRecord(dnsModel));
@@ -372,7 +367,7 @@ public class DnsResolution extends Fragment {
                 // init DnsRecordFormatter
                 DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(context);
 
-                // Checking if we have Click on Ping Button
+                // Checking if we have Clicked on Ping Button
                 if (!val) {
                     // Setting the Record TexView when we click on PING
                     mxRecord.setText(dnsRecordFetcher.mxRecord(dnsModel));
@@ -394,7 +389,7 @@ public class DnsResolution extends Fragment {
                 // init DnsRecordFormatter
                 DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(context);
 
-                // Checking if we have Click on Ping Button
+                // Checking if we have Clicked on Ping Button
                 if (!val) {
                     // Setting the Record TexView when we click on PING
                     nsRecord.setText(dnsRecordFetcher.nsRecord(dnsModel));
@@ -415,7 +410,7 @@ public class DnsResolution extends Fragment {
                 // init DnsRecordFormatter
                 DnsRecordFormatter dnsRecordFetcher = new DnsRecordFormatter(context);
 
-                // Checking if we have Click on Ping Button
+                // Checking if we have Clicked on Ping Button
                 if (!val) {
                     // Setting the Record TexView when we click on PING
                     txtRecord.setText(dnsRecordFetcher.txtRecord(dnsModel));
@@ -537,7 +532,6 @@ public class DnsResolution extends Fragment {
     }
 
     // get DNS Records for Top N Tranco Sites
-
     public void Top10TrancoSiteDatatoCsv(final int n) {
         deleteCsv();
         new Thread(new Runnable() {
@@ -571,7 +565,7 @@ public class DnsResolution extends Fragment {
         }
     }
 
-    // Async Task for getting DNS Record for Top 10 Sites in Background
+    // Async Task for getting DNS Record for Top N Sites in Background
     @SuppressLint("StaticFieldLeak")
     private class BackGroundTask extends AsyncTask<Integer, Void, Void> {
         @Override
@@ -582,18 +576,19 @@ public class DnsResolution extends Fragment {
     }
 
     // Storing the resolved parameters in firestore
-    public void storeToFireStore(int n) throws IOException, InterruptedException {
+    public void storeToFireStore(int n) throws InterruptedException {
         // get firestore instance
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        long docId = (long) Math.floor(Math.random() * Long.MAX_VALUE);
         // create a map for storing data to firestore
         HashMap<String, Object> data = new HashMap<>();
 
-        // setting up serial value to be a random value
-        data.put("serial", Math.floor(Math.random() * Long.MAX_VALUE));
+        // setting up serial value = random value
+        data.put("serial", docId);
 
-        // setting timestamp as the time when records fetched in UTC
-        data.put("timestamp", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("MM/dd/uuuu h:mm:ss a xxx")));
+        // setting timestamp as the time in UTC
+        data.put("timestamp", ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("dd/MM/uuuu h:mm:ss a xxx")));
 
         // setting total url range
         data.put("totol_url_range", n);
@@ -603,7 +598,7 @@ public class DnsResolution extends Fragment {
         data.put("LTE Network", network_data.get("LTE Network"));
         data.put("Wifi Network", network_data.get("Wifi Network"));
 
-        // getting the resolved ip addresses
+        // instantiate getIpAddress for doing DNS Resolution
         GetIpAddress getIpAddress = new GetIpAddress(this.getContext());
         getIpAddress.getDnsServer();
 
@@ -611,14 +606,13 @@ public class DnsResolution extends Fragment {
         if (!getIpAddress.checkPublicDns()) {
             // setting public dns no if the dns server for the network is a public dns server
             data.put("pubic_dns", "no");
-            final DocumentReference[] df = new DocumentReference[1];
-            db.collection("dns_resolve").add(data).addOnCompleteListener(new OnCompleteListener<DocumentReference>() {
+            DocumentReference documentReference = db.collection("dns_resolve").document(String.valueOf(docId));
+            documentReference.set(data).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
-                public void onComplete(@NonNull Task<DocumentReference> task) {
-                    df[0] = task.getResult();
+                public void onComplete(@NonNull Task<Void> task) {
                     for (int i = 0; i < n; i++) {
                         // get the dns resolution for url = top1000TrancoSites[i];
-                        getIpAddress.getDnsStuff(top1000TrancoSites[i], df[0]);
+                        getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
                     }
                 }
             });
@@ -640,7 +634,7 @@ public class DnsResolution extends Fragment {
             if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                 WifiTask wifiTask = new WifiTask();
                 wifiTask.execute();
-                Thread.sleep(2000);
+                Thread.sleep(5000);
                 network_data.put("Wifi Network", wifiNetworkName);
                 network_data.put("LTE Network", "NaN");
             } else if (networkInfo.getType() == ConnectivityManager.TYPE_MOBILE) {
