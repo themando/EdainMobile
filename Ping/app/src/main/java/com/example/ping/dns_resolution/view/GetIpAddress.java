@@ -109,21 +109,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv4;
                 n_Ipv4 = getNumberOfIpAddress(url, "a");
-
-                if (n_Ipv4 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (!(inetAddress instanceof Inet6Address)) {
-                            n_Ipv4++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv4 > 0) {
@@ -166,21 +157,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv6;
                 n_Ipv6 = getNumberOfIpAddress(url, "aaaa");
-
-                if (n_Ipv6 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (inetAddress instanceof Inet6Address) {
-                            n_Ipv6++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv6 > 0) {
