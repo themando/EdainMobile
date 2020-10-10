@@ -23,16 +23,6 @@ import retrofit2.http.Query;
 
 // Interface for extracting the JSON Response
 
-interface DnsServiceApiInterface {
-
-    @Headers("Content-Type: application/json")
-    @GET("/resolve?do=1")
-    Call<DnsModel> getModel(
-            @Query("name") String name,
-            @Query("type") String type
-    );
-}
-
 // Class for getting the data using Interface
 
 public class DnsService extends LiveData<DnsModel> {
