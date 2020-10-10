@@ -42,10 +42,12 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -580,7 +582,8 @@ public class DnsResolution extends Fragment {
         // get firestore instance
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        long docId = (long) Math.floor(Math.random() * Long.MAX_VALUE);
+        String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+        long docId = Long.parseLong(datetime);
         // create a map for storing data to firestore
         HashMap<String, Object> data = new HashMap<>();
 
