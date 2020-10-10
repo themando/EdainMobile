@@ -108,9 +108,9 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
-                * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
-                * */
+                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
+                 * */
 
                 int n_Ipv4 = 0;
                 n_Ipv4 = getNumberOfIpAddress(url, "a");
