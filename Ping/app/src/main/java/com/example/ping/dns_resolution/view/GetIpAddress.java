@@ -19,10 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,21 +107,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv4;
                 n_Ipv4 = getNumberOfIpAddress(url, "a");
-
-                if (n_Ipv4 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (!(inetAddress instanceof Inet6Address)) {
-                            n_Ipv4++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv4 > 0) {
@@ -166,21 +155,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv6;
                 n_Ipv6 = getNumberOfIpAddress(url, "aaaa");
-
-                if (n_Ipv6 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (inetAddress instanceof Inet6Address) {
-                            n_Ipv6++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv6 > 0) {
@@ -266,7 +246,7 @@ public class GetIpAddress {
                         }
                     });
 
-            Thread.sleep(2000);
+            Thread.sleep(2500);
 
             if (model[0] == null || model[0].getRecordData() == null || model[0].getRecordData().size() == 0) {
                 return 0;
