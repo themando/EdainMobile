@@ -22,6 +22,7 @@ import java.net.DatagramSocket;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -112,13 +113,11 @@ public class GetIpAddress {
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
-                int n_Ipv4 = 0;
+                int n_Ipv4;
                 n_Ipv4 = getNumberOfIpAddress(url, "a");
-                Thread.sleep(1000);
 
                 if (n_Ipv4 == 0) {
-                    InetAddress[] inetAddresses = Inet6Address.getAllByName(url);
-                    System.out.println(inetAddresses.length);
+                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
                     for (InetAddress inetAddress : inetAddresses) {
                         if (!(inetAddress instanceof Inet6Address)) {
                             n_Ipv4++;
@@ -139,7 +138,6 @@ public class GetIpAddress {
                     double currentTime = SystemClock.elapsedRealtime();
                     socket.setSoTimeout(60000);
                     socket.receive(receivePacket);
-                    System.out.println(receivePacket);
                     double now = SystemClock.elapsedRealtime() - currentTime;
                     now = now / 1000;
                     resolved_time = now;
@@ -175,11 +173,8 @@ public class GetIpAddress {
                 int n_Ipv6;
                 n_Ipv6 = getNumberOfIpAddress(url, "aaaa");
 
-                Thread.sleep(1000);
-
                 if (n_Ipv6 == 0) {
-                    InetAddress[] inetAddresses = Inet6Address.getAllByName(url);
-                    System.out.println(inetAddresses.length);
+                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
                     for (InetAddress inetAddress : inetAddresses) {
                         if (inetAddress instanceof Inet6Address) {
                             n_Ipv6++;
@@ -271,7 +266,7 @@ public class GetIpAddress {
                         }
                     });
 
-            Thread.sleep(1000);
+            Thread.sleep(2000);
 
             if (model[0] == null || model[0].getRecordData() == null || model[0].getRecordData().size() == 0) {
                 return 0;
@@ -328,6 +323,7 @@ public class GetIpAddress {
                             try {
                                 String builder = bytesList[index] + "." + bytesList[index + 1] +
                                         "." + bytesList[index + 2] + "." + bytesList[index + 3];
+
                                 list.add(builder);
                                 index = index + 3;
                                 index = index + 13;
@@ -369,7 +365,9 @@ public class GetIpAddress {
                                 builder.add(convertToHex(bytesList[index + 14], bytesList[index + 15]));
 
                                 String builder1 = scaleToIpv6(builder);
+
                                 list.add(builder1);
+
                                 index = index + 15;
                                 index = index + 13;
                                 cnt++;

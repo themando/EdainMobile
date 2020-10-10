@@ -7,10 +7,8 @@ import com.example.ping.dns_resolution.model.DnsRecordData;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 // Class Contain Methods for formatting the data for different records
 public class DnsRecordFormatter {

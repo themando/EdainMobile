@@ -62,7 +62,6 @@ public class WifiService extends LiveData<WifiDataModel> {
             public void onResponse(@NotNull Call<WifiDataModel> call, @NotNull Response<WifiDataModel> response) {
                 if (response.body() != null) {
                     wifiLiveData.setValue(response.body());
-                    System.out.println(response.body());
                 } else {
                     wifiLiveData.setValue(null);
                 }
