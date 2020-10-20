@@ -71,6 +71,7 @@ public class DnsResolution extends Fragment {
     ScrollView scrollView;
     ProgressBar progressBar;
     String wifiNetworkName = "Time Limit Exceeded to get Wifi Network from API";
+    String countryCode = "No Country Code";
     WifiViewModel model;
 
     // val for deciding whether we want (Top N Tranco Site Data) or (Data for URL)
@@ -307,8 +308,10 @@ public class DnsResolution extends Fragment {
             public void onChanged(WifiDataModel wifiDataModel) {
                 if (wifiDataModel.getCompany() != null) {
                     wifiNetworkName = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                    countryCode = wifiDataModel.getCountry().toLowerCase();
                 } else {
                     wifiNetworkName = wifiDataModel.getOrg();
+                    countryCode = wifiDataModel.getCountry().toLowerCase();
                 }
             }
         });
@@ -614,8 +617,26 @@ public class DnsResolution extends Fragment {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     for (int i = 0; i < n; i++) {
-                        // get the dns resolution for url = top1000TrancoSites[i];
-                        getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                        String[] list = top1000TrancoSites[i].split("\\.");
+
+                        String locale = requireContext().getResources().getConfiguration().getLocales().get(0).toString().toLowerCase();
+                        if (locale.charAt(locale.length() - 1) == '_') {
+                            locale = locale.substring(0, locale.length() - 1);
+                        } else {
+                            locale = locale.replace('_', '-');
+                        }
+
+                        if (list[list.length - 1].length() == 2) {
+                            if (list[list.length - 1].equals(countryCode)) {
+                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                            }
+                        } else if (list[0].length() == 5 && list[0].charAt(2) == '-') {
+                            if (list[0].equals(locale)) {
+                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                            }
+                        } else {
+                            getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                        }
                     }
                 }
             });
@@ -644,6 +665,7 @@ public class DnsResolution extends Fragment {
                 TelephonyManager manager = (TelephonyManager) requireContext().getSystemService(Context.TELEPHONY_SERVICE);
                 network_data.put("Wifi Network", "NaN");
                 network_data.put("LTE Network", manager.getNetworkOperatorName());
+                countryCode = manager.getNetworkCountryIso();
             }
         } else {
             network_data.put("Wifi Network", "No Internet Connection");
