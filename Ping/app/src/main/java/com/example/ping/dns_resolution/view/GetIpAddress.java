@@ -246,7 +246,7 @@ public class GetIpAddress {
                         }
                     });
 
-            Thread.sleep(2500);
+            Thread.sleep(3000);
 
             if (model[0] == null || model[0].getRecordData() == null || model[0].getRecordData().size() == 0) {
                 return 0;
@@ -254,9 +254,7 @@ public class GetIpAddress {
                 for (int i = 0; i < model[0].getRecordData().size(); i++) {
                     String data = model[0].getRecordData().get(i).getData();
                     String[] val = data.split(" ");
-                    if (val.length > 1) {
-                        n = 0;
-                    } else {
+                    if (val.length <= 1) {
                         n++;
                     }
                 }
@@ -308,9 +306,10 @@ public class GetIpAddress {
                                 index = index + 3;
                                 index = index + 13;
                                 cnt++;
-                            } catch (StringIndexOutOfBoundsException e) {
+                            } catch (IndexOutOfBoundsException e) {
                                 list.clear();
                                 System.out.println(e.getMessage());
+                                break;
                             }
                         }
 
@@ -351,9 +350,10 @@ public class GetIpAddress {
                                 index = index + 15;
                                 index = index + 13;
                                 cnt++;
-                            } catch (StringIndexOutOfBoundsException e) {
+                            } catch (IndexOutOfBoundsException e) {
                                 list.clear();
                                 System.out.println(e.getMessage());
+                                break;
                             }
                         }
 
