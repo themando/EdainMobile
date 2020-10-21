@@ -21,6 +21,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -255,7 +256,18 @@ public class GetIpAddress {
                     String data = model[0].getRecordData().get(i).getData();
                     String[] val = data.split(" ");
                     if (val.length <= 1) {
-                        n++;
+                        try{
+                            InetAddress inetAddress = InetAddress.getByName(data);
+                            n++;
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                            n=0;
+                            break;
+                        }
+                    }
+                    else{
+                        n=0;
+                        break;
                     }
                 }
                 return n;
