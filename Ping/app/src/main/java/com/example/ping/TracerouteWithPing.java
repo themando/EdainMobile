@@ -258,6 +258,7 @@ public class TracerouteWithPing {
         if (info.getType() == ConnectivityManager.TYPE_WIFI)
             return "WIFI";
         if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
+            String countryCode = manager.getNetworkCountryIso();
             int networkType = info.getSubtype();
             switch (networkType) {
                 case TelephonyManager.NETWORK_TYPE_GPRS:
@@ -266,7 +267,7 @@ public class TracerouteWithPing {
                 case TelephonyManager.NETWORK_TYPE_1xRTT:
                 case TelephonyManager.NETWORK_TYPE_IDEN:     // api< 8: replace by 11
                 case TelephonyManager.NETWORK_TYPE_GSM:      // api<25: replace by 16
-                    format = String.format("2G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 2G / %s",countryCode,manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_UMTS:
                 case TelephonyManager.NETWORK_TYPE_EVDO_0:
@@ -278,15 +279,15 @@ public class TracerouteWithPing {
                 case TelephonyManager.NETWORK_TYPE_EHRPD:    // api<11: replace by 14
                 case TelephonyManager.NETWORK_TYPE_HSPAP:    // api<13: replace by 15
                 case TelephonyManager.NETWORK_TYPE_TD_SCDMA: // api<25: replace by 17
-                    format = String.format("3G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 3G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_LTE:      // api<11: replace by 13
                 case TelephonyManager.NETWORK_TYPE_IWLAN:    // api<25: replace by 18
                 case 19: // LTE_CA
-                    format = String.format("4G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 4G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_NR:       // api<29: replace by 20
-                    format = String.format("5G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 5G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 default:
                     format = String.format("%s", manager.getNetworkOperatorName());

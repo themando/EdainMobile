@@ -14,15 +14,14 @@ public class WifiDataModel {
     @SerializedName("country")
     String country;
 
+    public String getCountry() {
+        return country;
+    }
     public String getOrg() {
         return org;
     }
 
     public Company getCompany() {
         return company;
-    }
-
-    public String getCountry() {
-        return country;
     }
 }
