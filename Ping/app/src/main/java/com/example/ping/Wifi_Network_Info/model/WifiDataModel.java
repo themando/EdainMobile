@@ -11,11 +11,18 @@ public class WifiDataModel {
     @SerializedName("company")
     Company company;
 
+    @SerializedName("country")
+    String country;
+
     public String getOrg() {
         return org;
     }
 
     public Company getCompany() {
         return company;
+    }
+
+    public String getCountry() {
+        return country;
     }
 }

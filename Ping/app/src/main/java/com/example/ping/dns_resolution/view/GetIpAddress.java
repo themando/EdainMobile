@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -109,21 +108,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv4 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv4;
                 n_Ipv4 = getNumberOfIpAddress(url, "a");
-
-                if (n_Ipv4 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (!(inetAddress instanceof Inet6Address)) {
-                            n_Ipv4++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv4 > 0) {
@@ -166,21 +156,12 @@ public class GetIpAddress {
                 DatagramPacket sendPacket;
 
                 /*
-                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns and using Inbuilt InetAddress method's
+                 * Getting the number of Ipv6 Addresses of a url with help of API call to Google Public Dns
                  * This helps in decoding the Dns Response which sometimes contain Additional Bytes in response
                  * */
 
                 int n_Ipv6;
                 n_Ipv6 = getNumberOfIpAddress(url, "aaaa");
-
-                if (n_Ipv6 == 0) {
-                    InetAddress[] inetAddresses = InetAddress.getAllByName(url);
-                    for (InetAddress inetAddress : inetAddresses) {
-                        if (inetAddress instanceof Inet6Address) {
-                            n_Ipv6++;
-                        }
-                    }
-                }
 
                 // send packets
                 if (n_Ipv6 > 0) {
@@ -266,7 +247,7 @@ public class GetIpAddress {
                         }
                     });
 
-            Thread.sleep(2000);
+            Thread.sleep(3000);
 
             if (model[0] == null || model[0].getRecordData() == null || model[0].getRecordData().size() == 0) {
                 return 0;
@@ -274,10 +255,19 @@ public class GetIpAddress {
                 for (int i = 0; i < model[0].getRecordData().size(); i++) {
                     String data = model[0].getRecordData().get(i).getData();
                     String[] val = data.split(" ");
-                    if (val.length > 1) {
-                        n = 0;
-                    } else {
-                        n++;
+                    if (val.length <= 1) {
+                        try{
+                            InetAddress inetAddress = InetAddress.getByName(data);
+                            n++;
+                        } catch (UnknownHostException e) {
+                            e.printStackTrace();
+                            n=0;
+                            break;
+                        }
+                    }
+                    else{
+                        n=0;
+                        break;
                     }
                 }
                 return n;
@@ -328,9 +318,10 @@ public class GetIpAddress {
                                 index = index + 3;
                                 index = index + 13;
                                 cnt++;
-                            } catch (StringIndexOutOfBoundsException e) {
+                            } catch (IndexOutOfBoundsException e) {
                                 list.clear();
                                 System.out.println(e.getMessage());
+                                break;
                             }
                         }
 
@@ -371,9 +362,10 @@ public class GetIpAddress {
                                 index = index + 15;
                                 index = index + 13;
                                 cnt++;
-                            } catch (StringIndexOutOfBoundsException e) {
+                            } catch (IndexOutOfBoundsException e) {
                                 list.clear();
                                 System.out.println(e.getMessage());
+                                break;
                             }
                         }
 
