@@ -51,7 +51,7 @@ import java.util.Random;
 public class TraceActivity extends AppCompatActivity {
 
 	public static final String tag = "TraceroutePing";
-	public static final String[] TRANCO_TOP_10 = {
+	public static final String[] TRANCO_TOP_10 = new String[]{
 			"google.com",
 			"facebook.com",
 			"youtube.com",
@@ -1051,8 +1051,9 @@ public class TraceActivity extends AppCompatActivity {
 			"zing.vn",
 			"naukri.com",
 			"moz.com",
-			"nokia.com",
-			};
+			"nokia.com"
+	};
+
 	public static long doc_ser;
 	private Button buttonLaunch, buttonExport, buttonTranco;
 	private EditText editTextPing, editTextFile, editTrancoNum;
@@ -1064,6 +1065,7 @@ public class TraceActivity extends AppCompatActivity {
 	private TracerouteWithPing tracerouteWithPing;
 	private final int maxTtl = 250;
 	static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
+	String countryCode = "No Country Code";
 	// Storage Permissions
 
 	private List<TracerouteContainer> traces;
@@ -1098,9 +1100,11 @@ public class TraceActivity extends AppCompatActivity {
 			public void onChanged(WifiDataModel wifiDataModel) {
 				if(wifiDataModel.getCompany() != null) {
 					wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+					countryCode = wifiDataModel.getCountry().toLowerCase();
 				}
 				else{
 					wifi_name = wifiDataModel.getOrg();
+					countryCode = wifiDataModel.getCountry().toLowerCase();
 				}
 			}
 		});
@@ -1155,7 +1159,28 @@ public class TraceActivity extends AppCompatActivity {
 					String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
 					doc_ser = Long.parseLong(datetime);
 					ArrayList<String> sites = new ArrayList<>();
-					sites.addAll(Arrays.asList(TRANCO_TOP_10).subList(0, Integer.parseInt(String.valueOf(editTrancoNum.getText()))));
+					for (int i = 0; i < Integer.parseInt(String.valueOf(editTrancoNum.getText())); i++){
+						String[] list = TRANCO_TOP_10[i].split("\\.");
+
+						String locale = getResources().getConfiguration().getLocales().get(0).toString().toLowerCase();
+						if (locale.charAt(locale.length() - 1) == '_') {
+							locale = locale.substring(0, locale.length() - 1);
+						} else {
+							locale = locale.replace('_', '-');
+						}
+
+						if (list[list.length - 1].length() == 2) {
+							if (list[list.length - 1].equals(countryCode)) {
+								sites.add(TRANCO_TOP_10[i]);
+							}
+						} else if (list[0].length() == 5 && list[0].charAt(2) == '-') {
+							if (list[0].equals(locale)) {
+								sites.add(TRANCO_TOP_10[i]);
+							}
+						} else {
+							sites.add(TRANCO_TOP_10[i]);
+						}
+					}
 					Toast.makeText(TraceActivity.this, "Trace routes will be saved to trace_ping.csv", Toast.LENGTH_SHORT).show();
 					traces.clear();
 					traceListAdapter.notifyDataSetChanged();
