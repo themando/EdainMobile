@@ -1053,7 +1053,6 @@ public class TraceActivity extends AppCompatActivity {
 			"moz.com",
 			"nokia.com"
 	};
-
 	public static long doc_ser;
 	private Button buttonLaunch, buttonExport, buttonTranco;
 	private EditText editTextPing, editTextFile, editTrancoNum;
