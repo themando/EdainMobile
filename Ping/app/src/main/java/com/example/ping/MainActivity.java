@@ -31,7 +31,8 @@ public class MainActivity extends Activity {
         Button traceButton = (Button) findViewById(R.id.traceButton);
         Button speedButton = (Button) findViewById(R.id.speedPageButton);
         Button loadButton = (Button) findViewById(R.id.loadPageButton);
-        final Button dnsResolutionButton = (Button) findViewById(R.id.dnsResolutionButton);
+        Button dnsResolutionButton = (Button) findViewById(R.id.dnsResolutionButton);
+        Button youtubeButton = (Button) (findViewById(R.id.youtube_button));
 
         //Latency- Ping Tranco Top 100 page
         latencyButton.setOnClickListener(new View.OnClickListener(){
@@ -86,6 +87,13 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent startIntent = new Intent(getApplicationContext(), Page.class);
+                startActivity(startIntent);
+            }
+        });
+        youtubeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent startIntent = new Intent(getApplicationContext(), YoutubeFragment.class);
                 startActivity(startIntent);
             }
         });
