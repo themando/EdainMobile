@@ -75,6 +75,7 @@ public class Latency extends AppCompatActivity {
     static WifiViewModel model;
    // static int doc_ser;
     static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
+    String countryCode = "No Country Code";
     TableLayout tl;
     RelativeLayout tableLayout;
     TableRow tr;
@@ -1112,9 +1113,11 @@ public class Latency extends AppCompatActivity {
             public void onChanged(WifiDataModel wifiDataModel) {
                 if(wifiDataModel.getCompany() != null) {
                     wifi_name = wifiDataModel.getOrg() + " " + wifiDataModel.getCompany().getDomain();
+                    countryCode = wifiDataModel.getCountry().toLowerCase();
                 }
                 else{
                     wifi_name = wifiDataModel.getOrg();
+                    countryCode = wifiDataModel.getCountry().toLowerCase();
                 }
             }
         });
@@ -1132,7 +1135,32 @@ public class Latency extends AppCompatActivity {
                     Toast.makeText(Latency.this, "Please enter some number!", Toast.LENGTH_SHORT).show();
                 } else {
                     //pick top n sites for pinging
-                    Sites = new ArrayList<>(Arrays.asList(sites).subList(0, Integer.parseInt(String.valueOf(n.getText()))));
+                    //Sites = new ArrayList<>(Arrays.asList(sites).subList(0, Integer.parseInt(String.valueOf(n.getText()))));
+                    ArrayList<String> Sites = new ArrayList<>();
+
+                    for (int i = 0; i < Integer.parseInt(String.valueOf(n.getText())); i++){
+                        String[] list = sites[i].split("\\.");
+
+                        String locale = getResources().getConfiguration().getLocales().get(0).toString().toLowerCase();
+                        if (locale.charAt(locale.length() - 1) == '_') {
+                            locale = locale.substring(0, locale.length() - 1);
+                        } else {
+                            locale = locale.replace('_', '-');
+                        }
+
+                        if (list[list.length - 1].length() == 2) {
+                            if (list[list.length - 1].equals(countryCode)) {
+                                Sites.add(sites[i]);
+                            }
+                        } else if (list[0].length() == 5 && list[0].charAt(2) == '-') {
+                            if (list[0].equals(locale)) {
+                                Sites.add(sites[i]);
+                            }
+                        } else {
+                            Sites.add(sites[i]);
+                        }
+                    }
+
                     Toast.makeText(Latency.this, "Latency results will be saved to ping.csv", Toast.LENGTH_SHORT).show();
 
                     //Remove pre-existing table, and cancel aysnc task if previously running:
@@ -1770,6 +1798,7 @@ public class Latency extends AppCompatActivity {
         if (info.getType() == ConnectivityManager.TYPE_WIFI)
             return "WIFI";
         if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
+            countryCode = manager.getNetworkCountryIso();
             int networkType = info.getSubtype();
             switch (networkType) {
                 case TelephonyManager.NETWORK_TYPE_GPRS:
@@ -1778,7 +1807,7 @@ public class Latency extends AppCompatActivity {
                 case TelephonyManager.NETWORK_TYPE_1xRTT:
                 case TelephonyManager.NETWORK_TYPE_IDEN:     // api< 8: replace by 11
                 case TelephonyManager.NETWORK_TYPE_GSM:      // api<25: replace by 16
-                    format = String.format("2G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 2G / %s",countryCode,manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_UMTS:
                 case TelephonyManager.NETWORK_TYPE_EVDO_0:
@@ -1790,15 +1819,15 @@ public class Latency extends AppCompatActivity {
                 case TelephonyManager.NETWORK_TYPE_EHRPD:    // api<11: replace by 14
                 case TelephonyManager.NETWORK_TYPE_HSPAP:    // api<13: replace by 15
                 case TelephonyManager.NETWORK_TYPE_TD_SCDMA: // api<25: replace by 17
-                    format = String.format("3G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 3G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_LTE:      // api<11: replace by 13
                 case TelephonyManager.NETWORK_TYPE_IWLAN:    // api<25: replace by 18
                 case 19: // LTE_CA
-                    format = String.format("4G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 4G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 case TelephonyManager.NETWORK_TYPE_NR:       // api<29: replace by 20
-                    format = String.format("5G / %s", manager.getNetworkOperatorName());
+                    format = String.format("%s | 5G / %s",countryCode, manager.getNetworkOperatorName());
                     return format;
                 default:
                     format = String.format("%s", manager.getNetworkOperatorName());
