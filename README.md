@@ -14,7 +14,7 @@ We store the **IP addresses, hostnames and latencies** of the servers where the 
 
 ## DNS Resolution
 
-The DNS Resolution module is based on the DNS Protocol http://www.tcpipguide.com/free/t_DNSMessageHeaderandQuestionSectionFormat.htm. The module sends Datagram Packets to the DNS server and retrieves the **Ipv4Addresses and Ipv6Addresses** associated with a particular url. The results are stored in firestore.
+The DNS Resolution module is based on DNS Protocol http://www.tcpipguide.com/free/t_DNSMessageHeaderandQuestionSectionFormat.htm. The module sends Datagram Packets to the DNS server and retrieves the `*Ipv4Addresses and Ipv6Addresses*` associated with a particular url. The results are stored in firestore.
 
 The module has a space to enter the number of sites to be fetched. The sites are stored in an array based on Top tranco sites. The number of sites to be fetched has a limit of 1000.
 
@@ -30,12 +30,15 @@ https://chaquo.com/chaquopy/license/
 
 ## Page Load
 
-The Page Load module is based on the webview component in android which is based on the chromium framework. The webview loads different urls and runs javascript in the console of webview to get various parameters of page load timings to measure and analyze the performance of web pages. The results are stored in firetore.
+The Page Load module is based on the webview component (based on the chromium framework) in android. The webview loads different urls and runs javascript in the console of webview to get various parameters of page load timings to measure and analyze the performance of web pages. The results are stored in firetore.
 
-The module has a space to enter the number of urls against which the measurements is to be run. The sites are stored in an array based on Top Tranco Sites. The number of sites to be fetched has a limit of 1000.
+The module has a space to enter the number of urls against which the measurements are to be run. The sites are stored in an array based on Top Tranco Sites. The number of sites to be fetched has a limit of 1000.
 
 ## Youtube Feature
 
-The Youtube Feature module is based on the Iframe API https://developers.google.com/youtube/iframe_api_reference. It is aimed at measuring the quality of network by measuring `*downloaded_video, video_played, buffer_size, curr_resilution, playback_mode*` of the embedded youtube video at different time instants. We have used the android library based on the Iframe API https://github.com/PierfrancescoSoffritti/android-youtube-player.
+The Youtube Feature module is based on the Iframe API https://developers.google.com/youtube/iframe_api_reference. It is aimed at measuring the quality of network by measuring `*downloaded_video, video_played, buffer_size, curr_resolution, playback_mode*` of the embedded youtube video at different time instants. We have used the android library based on the Iframe API https://github.com/PierfrancescoSoffritti/android-youtube-player.
 
-We have embedded 10 videos in the module each of which has a button for selecting the time interval during which we need to run the measurements. There is also a button to export a text file containing the parameters: `*video_id,timestamp,downloaded_video, video_played, buffer_size, curr_resilution, playback_mode*`.
+We have embedded 10 videos in the module each of which has a button for selecting the time interval during which we need to run the measurements. There is also a button to export a text file containing the parameters: `*video_id,timestamp,downloaded_video, video_played, buffer_size, curr_resolution, playback_mode*`.
+
+# How to download the APK
+In order to test the application install the apk on your devices as given in the repo.
