@@ -36,6 +36,6 @@ The module has a space to enter the number of urls against which the measurement
 
 ## Youtube Feature
 
-The Youtube Feature module is based on the Iframe API https://developers.google.com/youtube/iframe_api_reference. It is aimed at measuring the quality of network by measuring *downloaded_video, video_played, buffer_size, curr_resilution, playback_mode* of the embedded youtube video at different time instants. We have used the android library based on the Iframe API https://github.com/PierfrancescoSoffritti/android-youtube-player.
+The Youtube Feature module is based on the Iframe API https://developers.google.com/youtube/iframe_api_reference. It is aimed at measuring the quality of network by measuring `*downloaded_video, video_played, buffer_size, curr_resilution, playback_mode*` of the embedded youtube video at different time instants. We have used the android library based on the Iframe API https://github.com/PierfrancescoSoffritti/android-youtube-player.
 
-We have embedded 10 videos in the module each of which has a button for selecting the time interval during which we need to run the measurements. There is also a button to export a text file containing the parameters *video_id,timestamp,downloaded_video, video_played, buffer_size, curr_resilution, playback_mode*.
+We have embedded 10 videos in the module each of which has a button for selecting the time interval during which we need to run the measurements. There is also a button to export a text file containing the parameters: `*video_id,timestamp,downloaded_video, video_played, buffer_size, curr_resilution, playback_mode*`.
