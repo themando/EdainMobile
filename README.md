@@ -34,8 +34,6 @@ The Page Load module is based on the webview component in android which is based
 
 The module has a space to enter the number of urls against which the measurements is to be run. The sites are stored in an array based on Top Tranco Sites. The number of sites to be fetched has a limit of 1000.
 
-https://sites.google.com/a/webpagetest.org/docs/private-instances
-
 ## Youtube Feature
 
 The Youtube Feature module is based on the Iframe API https://developers.google.com/youtube/iframe_api_reference. It is aimed at measuring the quality of network by measuring **downloaded_video, video_played, buffer_size, curr_resilution, playback_mode** of the embedded youtube video at different time instants. We have used the android library based on the Iframe API https://github.com/PierfrancescoSoffritti/android-youtube-player.
