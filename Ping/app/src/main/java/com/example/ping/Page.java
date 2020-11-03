@@ -1,20 +1,21 @@
 package com.example.ping;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,13 +28,14 @@ import java.util.HashMap;
 // https://sites.google.com/a/webpagetest.org/docs/private-instances
 
 public class Page extends Activity {
-    FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
+    FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance(); // firestore instance
     EditText editText;
     private WebView webView;
-    int largest = 0;
+    int n = 0; // number of Tranco sites against which to run the measurements
+    int TIME_OUT = 20; // Timeout for loading page
     long docId;
     HashMap<String, Object> hashMap;
-    public static final String[] TRANCO_TOP_10 = new String[]{
+    public static final String[] TRANCO_TOP_1000 = new String[]{
             "google.com",
             "facebook.com",
             "youtube.com",
@@ -1035,6 +1037,7 @@ public class Page extends Activity {
             "moz.com",
             "nokia.com"
     };
+    // list of console commands to get the different parameters of page load timing
     String[] commandList = new String[]{
             "window.performance.timing.connectEnd",
             "window.performance.timing.connectStart",
@@ -1068,22 +1071,33 @@ public class Page extends Activity {
         Button loadButton = (Button) findViewById(R.id.loadButton);
         webView = (WebView) findViewById(R.id.webView);
         editText = findViewById(R.id.page_load_editText);
-        hashMap = new HashMap<>();
-
         String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
         docId = Long.parseLong(datetime);
+        Context context = this;
+
         // Load Button
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                largest = Integer.parseInt(editText.getText().toString());
+                hashMap = new HashMap<>();
+
+                // clearing cache and history of webview before proceeding with measurements
+                webView.clearCache(true);
+                webView.clearHistory();
+                webView.clearSslPreferences();
+                webView.clearFormData();
+
+                n = Integer.parseInt(editText.getText().toString());
+
+                hideSoftwareKeyboard(editText, context);
                 webView.getSettings().setJavaScriptEnabled(true);
-                BackGroundTask task = new BackGroundTask();
-                task.doInBackground();
+                Task1 task = new Task1(0);
+                task.execute();
             }
         });
     }
 
+    // task for executing the measurements for a particular url
     private class Task1 {
         int i;
         HashMap<String, Object> data = new HashMap<>();
@@ -1092,24 +1106,20 @@ public class Page extends Activity {
             this.i = i;
         }
 
-        protected void doInBackground() {
-            webView.setWebViewClient(new MyWebViewClient(data, TRANCO_TOP_10[i], i));
-            webView.loadUrl("http://" + TRANCO_TOP_10[i]);
+        protected void execute() {
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            data.put("systemTime", timestamp.getTime());
+            webView.setWebViewClient(new MyWebViewClient(data, TRANCO_TOP_1000[i], i));
+            webView.loadUrl("http://" + TRANCO_TOP_1000[i]);
         }
     }
 
-    private class BackGroundTask {
-        protected void doInBackground() {
-            Task1 task = new Task1(0);
-            task.doInBackground();
-        }
-    }
-
+    // custom webViewClient to measure the various page load timings
     private class MyWebViewClient extends WebViewClient {
-        HashMap<String, Object> data;
-        String url;
-        int i;
-        private boolean done = false;
+        HashMap<String, Object> data; // hashmap storing the variables
+        String url; // String storing the current url loading in the webview
+        int i; // storing the index of current url in the TRANCO_TOP_1000 list
+        private boolean timeout; // boolean assisting in deciding the timeout
 
         MyWebViewClient(HashMap<String, Object> data, String url, int i) {
             this.data = data;
@@ -1118,40 +1128,76 @@ public class Page extends Activity {
         }
 
         @Override
-        public void onPageFinished(WebView view, String url1) {
-            if (!done) {
-                done = true;
-                for (int i = 0; i < commandList.length; i++) {
-                    String[] list = commandList[i].split("\\.");
-                    webView.evaluateJavascript("javascript:" + commandList[i], new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String value) {
-                            data.put(list[3], value);
-                            System.out.println(value);
+        public void onPageStarted(WebView view, String url1, Bitmap favicon) {
+            timeout = true;
+
+            // setting up timeout for page loading
+            Handler timeoutHandler = new Handler();
+            Runnable run = new Runnable() {
+                public void run() {
+                    if (!timeout) {
+                        return;
+                    }
+                }
+            };
+            timeoutHandler.postDelayed(run, TIME_OUT * 1000);
+
+            // if the page hasn't loaded yet put timeout true and other parameters as 0
+            if (timeout) {
+                for (int j = 0; j < commandList.length; j++) {
+                    String[] list = commandList[j].split("\\.");
+                    data.put(list[3], 0);
+                    // loading the next url once all the page load timing parameters set to 0
+                    if (j == commandList.length - 1) {
+                        hashMap.put(url, data);
+                        // deciding whether to load the next url or terminate the process by storing to firestore
+                        if (i < n - 1) {
+                            Task1 task = new Task1(i + 1);
+                            task.execute();
+                        } else {
+                            firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
                         }
-                    });
+                    }
                 }
-            }
-            if (done) {
-                done = false;
-                System.out.println("Hello");
-                hashMap.put(url, data);
-                webView.clearCache(true);
-                webView.clearHistory();
-                webView.clearSslPreferences();
-                webView.clearFormData();
-                if (i < largest-1) {
-                    Task1 task = new Task1(i + 1);
-                    task.doInBackground();
-                } else {
-                    firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
-                }
+                data.put("timeout", true);
+                return;
             }
         }
 
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            return false;
+        public void onPageFinished(WebView view, String url1) {
+            timeout = false;
+            for (int j = 0; j < commandList.length; j++) {
+                String[] list = commandList[j].split("\\.");
+                int finalJ = j;
+                webView.evaluateJavascript("javascript:" + commandList[j], new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String value) {
+                        data.put(list[3], (long) Double.parseDouble(value));
+                        // loading the next url once the page load timing measurement gets over
+                        if (finalJ == commandList.length - 1) {
+                            hashMap.put(url, data);
+                            // deciding whether to load the next url or terminate the process by storing to firestore
+                            if (i < n - 1) {
+                                Task1 task = new Task1(i + 1);
+                                task.execute();
+                            } else {
+                                data.put("timeout", false);
+                                // store to firestore
+                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    // method to hide the on screen keyboard
+    public void hideSoftwareKeyboard(EditText currentEditText, Context context) {
+        InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive()) {
+            imm.hideSoftInputFromWindow(currentEditText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
 }
