@@ -8,6 +8,10 @@ The Ping module sends a specified amount of packets to a chosen network host. Re
 
 The following statistics are collected in ping.csv: *Timestamp, Server, Packets, Loss, Min, Avg, Max, Stddev*
 
+## Traceroute
+
+We store the **IP addresses, hostnames and latencies** of the servers where the packets are sent and received successfully for the top *N* (b/w 1-1000) *Tranco Sites*. These are also saved to a csv file which can be exported using the export button. 
+
 ## Speed Test
 
 The Speed Test module runs and collects results from speedtest.net, testing the speed and performance of the device's internet connection. Tests are run at user-defined intervals (minutes), where class duration is usually 75 minutes and testing interval is typically every 15 minutes. Results are aggregated in a common .csv file (speedtest.csv) and may be cleared or exported via Google Drive using the corresponding Clear and Export buttons.
