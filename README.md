@@ -48,5 +48,4 @@ The Youtube Feature module is based on the Iframe API https://developers.google.
 
 We have embedded 10 videos in the module each of which has a button for selecting the time interval during which we need to run the measurements. There is also a button to export a text file containing the parameters: `*video_id,timestamp,downloaded_video, video_played, buffer_size, curr_resolution, playback_mode*`.
 
-# How to download the APK
-In order to test the application install the apk on your devices as given in the repo.
+
