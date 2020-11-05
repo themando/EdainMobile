@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -74,7 +75,7 @@ public class Latency extends AppCompatActivity {
     private static final String FILE_NAME = "ping.csv";
     public String Header;
     static WifiViewModel model;
-   // static int doc_ser;
+
     static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
     String countryCode = "No Country Code";
     TableLayout tl;
@@ -90,7 +91,7 @@ public class Latency extends AppCompatActivity {
      */ FirebaseFirestore db = FirebaseFirestore.getInstance();
 
 
-   static String[] sites = {
+    public static final String[] sites = new String[]{
             "google.com",
             "facebook.com",
             "youtube.com",
@@ -1092,7 +1093,7 @@ public class Latency extends AppCompatActivity {
             "moz.com",
             "nokia.com",};
 
-    static ArrayList<String> Sites;
+     ArrayList<String> Sites;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -1137,7 +1138,7 @@ public class Latency extends AppCompatActivity {
                 } else {
                     //pick top n sites for pinging
 
-                  //  ArrayList<String> Sites = new ArrayList<>();
+                    ArrayList<String> Sites = new ArrayList<>();
 
                     for (int i = 0; i < Integer.parseInt(String.valueOf(n.getText())); i++){
                         String[] list = sites[i].split("\\.");
@@ -1158,19 +1159,23 @@ public class Latency extends AppCompatActivity {
                                 Sites.add(sites[i]);
                             }
                         } else {
-                            Sites.add(sites[i]);
+                                Sites.add(sites[i]);
                         }
                     }
-                    Header = "Tranco Top" + Integer.toString(Sites.size());
+                    Header = "Tranco Top " + Integer.toString(Sites.size());
 
                     Toast.makeText(Latency.this, "Latency results will be saved to ping.csv", Toast.LENGTH_SHORT).show();
 
-                    //Remove pre-existing table, and cancel aysnc task if previously running:
+                    /**Remove pre-existing table, and cancel aysnc task if previously running:**/
                     if (asyncPing != null && asyncPing.getStatus() != AsyncTask.Status.FINISHED) {
                         Log.i("asyncPing!=null-", "set to true");
                         asyncPing.cancel(true);
                     }
                     tl.removeAllViews();
+
+                    /**hide keyboard**/
+                    hideSoftwareKeyboard(n);
+
                     /**Start Pinging, call async function**/
                     addHeaders(Header);
                     asyncPing = new PingTrancoSites();
@@ -1862,6 +1867,17 @@ public class Latency extends AppCompatActivity {
         }
     }
 
+    /**
+     * Hides the keyboard
+     *
+     * @param currentEditText The current selected edittext
+     */
+    public void hideSoftwareKeyboard(EditText currentEditText) {
+        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive()) {
+            imm.hideSoftInputFromWindow(currentEditText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+        }
+    }
 
 
 }

@@ -32,7 +32,7 @@ public class Page extends Activity {
     EditText editText;
     private WebView webView;
     int n = 0; // number of Tranco sites against which to run the measurements
-    int TIME_OUT = 20; // Timeout for loading page
+    int TIME_OUT = 15; // Timeout for loading page
     long docId;
     HashMap<String, Object> hashMap;
     public static final String[] TRANCO_TOP_1000 = new String[]{
