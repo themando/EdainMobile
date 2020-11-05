@@ -3,8 +3,8 @@ package com.example.ping;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.ValueCallback;
@@ -1064,14 +1064,16 @@ public class Page extends Activity {
         Button loadButton = (Button) findViewById(R.id.loadButton);
         webView = (WebView) findViewById(R.id.webView);
         editText = findViewById(R.id.page_load_editText);
-        String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
-        docId = Long.parseLong(datetime);
         Context context = this;
 
         // Load Button
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
+                docId = Long.parseLong(datetime);
+
                 hashMap = new HashMap<>();
 
                 // clearing cache and history of webview before proceeding with measurements
@@ -1124,37 +1126,9 @@ public class Page extends Activity {
         public void onPageStarted(WebView view, String url1, Bitmap favicon) {
             timeout = true;
 
-            // setting up timeout for page loading
-            Handler timeoutHandler = new Handler();
-            Runnable run = new Runnable() {
-                public void run() {
-                    if (!timeout) {
-                        return;
-                    }
-                }
-            };
-            timeoutHandler.postDelayed(run, TIME_OUT * 1000);
-
-            // if the page hasn't loaded yet put timeout true and other parameters as 0
-            if (timeout) {
-                for (int j = 0; j < commandList.length; j++) {
-                    String[] list = commandList[j].split("\\.");
-                    data.put(list[3], 0);
-                    // loading the next url once all the page load timing parameters set to 0
-                    if (j == commandList.length - 1) {
-                        hashMap.put(url, data);
-                        // deciding whether to load the next url or terminate the process by storing to firestore
-                        if (i < n - 1) {
-                            Task1 task = new Task1(i + 1);
-                            task.execute();
-                        } else {
-                            firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
-                        }
-                    }
-                }
-                data.put("timeout", true);
-                return;
-            }
+            // executing async task to check for timeout
+            Task task = new Task();
+            task.execute();
         }
 
         @Override
@@ -1182,6 +1156,50 @@ public class Page extends Activity {
                         }
                     }
                 });
+            }
+        }
+
+        private class Task extends AsyncTask<Void, Void, Void> {
+            @Override
+            protected Void doInBackground(Void... voids) {
+                // setting up timeout for page loading
+                int cnt = 0;
+                while (cnt < TIME_OUT*1000) {
+                    try {
+                        Thread.sleep(1);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (!timeout) {
+                        return null;
+                    }
+                    cnt++;
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                // if the page hasn't loaded yet put timeout true and other parameters as 0
+                if (timeout) {
+                    for (int j = 0; j < commandList.length; j++) {
+                        String[] list = commandList[j].split("\\.");
+                        data.put(list[3], 0);
+                        // loading the next url once all the page load timing parameters set to 0
+                        if (j == commandList.length - 1) {
+                            hashMap.put(url, data);
+                            // deciding whether to load the next url or terminate the process by storing to firestore
+                            if (i < n - 1) {
+                                Task1 task = new Task1(i + 1);
+                                task.execute();
+                            } else {
+                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
+                            }
+                        }
+                    }
+                    data.put("timeout", true);
+                }
+                super.onPostExecute(aVoid);
             }
         }
     }

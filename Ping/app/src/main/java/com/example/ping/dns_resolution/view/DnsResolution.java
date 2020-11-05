@@ -594,7 +594,7 @@ public class DnsResolution extends Fragment {
         // get firestore instance
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+        String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
         long docId = Long.parseLong(datetime);
         // create a map for storing data to firestore
         HashMap<String, Object> data = new HashMap<>();
