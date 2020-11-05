@@ -43,7 +43,7 @@
                 android:autofillHints=""
                 android:background="@drawable/border"
                 android:hint="Enter N"
-                android:inputType="text"
+                android:inputType="number"
                 android:padding="10dp"
                 app:layout_flexGrow="1" />
 
