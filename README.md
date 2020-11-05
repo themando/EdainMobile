@@ -2,6 +2,14 @@
 
 EdainMobile provides a set of tools to measure network performance, network speed and web page performance from an Android device. The three primary modules are Ping, Speed Test and Page Load.
 
+## Latency
+
+The Latency feature iterates through TRANCO Top *N* (b/w 1-1000) sites, pinging each site and returning their latency measurements.
+Results are aggregated in a file (.csv), which may be cleared and re-written using the Clear button. The resulting .csv file (latency.csv) may be exported from the app via Google Drive using the corresponding Export button. 
+
+We're collecting the following statistics: *Timestamp, Server, Packets, Loss, Min, Avg, Max, Stddev*
+These results are also being stored in Firestore.
+
 ## Ping
 
 The Ping module sends a specified amount of packets to a chosen network host. Results are aggregated in a file (.csv), which may be cleared and re-written using the Clear button. The resulting .csv file (ping.csv) may be exported from the app via Google Drive using the corresponding Export button. 
@@ -21,7 +29,7 @@ The module has a space to enter the number of sites to be fetched. The sites are
 ## Speed Test
 
 The Speed Test module runs and collects results from speedtest.net, testing the speed and performance of the device's internet connection. Tests are run at user-defined intervals (minutes), where class duration is usually 75 minutes and testing interval is typically every 15 minutes. Results are aggregated in a common .csv file (speedtest.csv) and may be cleared or exported via Google Drive using the corresponding Clear and Export buttons.
-
+The results from first iteration are stored in Firestore.
 https://www.speedtest.net/
 
 The Speed Test module uses an unlicensed version of Chaquopy (Python SDK for Android) to run the speedtest.py and run_speedtest.py scripts. The unlicensed SDK is fully functional, but apps built with it will display a notification on startup, and will only run for 5 minutes at a time. To remove these restrictions, a license is required.
