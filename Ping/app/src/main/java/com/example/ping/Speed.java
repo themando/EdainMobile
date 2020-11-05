@@ -48,7 +48,7 @@ import java.util.Random;
 public class Speed extends Activity {
     private static final String FILE_NAME = "speedtest.csv";
 
-    String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+    String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
     long doc_ser = Long.parseLong(datetime);
 
     /**

@@ -1206,7 +1206,7 @@ public class Latency extends AppCompatActivity {
     public class PingTrancoSites extends AsyncTask< ArrayList<String>, String, Void> {
         Map<String, Object> m = new HashMap<>();
         Map<String,Object> M = new HashMap<>();
-             String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+             String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
              long doc_ser = Long.parseLong(datetime);
 
              @Override

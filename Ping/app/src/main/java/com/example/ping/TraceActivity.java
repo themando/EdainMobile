@@ -51,7 +51,7 @@ import java.util.Random;
 public class TraceActivity extends AppCompatActivity {
 
 	public static final String tag = "TraceroutePing";
-	public static final String[] TRANCO_TOP_10 = new String[]{
+	public static final String[] TRANCO_TOP_1000 = new String[]{
 			"google.com",
 			"facebook.com",
 			"youtube.com",
@@ -1127,7 +1127,7 @@ public class TraceActivity extends AppCompatActivity {
 					if (editTextFile.getText().length() != 0) {
 						fileName = String.valueOf(editTextFile.getText());
 					}
-					String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+					String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
 					 doc_ser = Long.parseLong(datetime);
 					Toast.makeText(TraceActivity.this, "Trace routes will be saved at: \n" + getFilesDir() + "/" + fileName, Toast.LENGTH_SHORT).show();
 					traces.clear();
@@ -1155,11 +1155,11 @@ public class TraceActivity extends AppCompatActivity {
 					if (editTextFile.getText().length() != 0) {
 						fileName = String.valueOf(editTextFile.getText());
 					}
-					String datetime = new SimpleDateFormat("yyMMddHHmm").format(new Date());
+					String datetime = new SimpleDateFormat("yyMMddHHmmssss").format(new Date());
 					doc_ser = Long.parseLong(datetime);
 					ArrayList<String> sites = new ArrayList<>();
 					for (int i = 0; i < Integer.parseInt(String.valueOf(editTrancoNum.getText())); i++){
-						String[] list = TRANCO_TOP_10[i].split("\\.");
+						String[] list = TRANCO_TOP_1000[i].split("\\.");
 
 						String locale = getResources().getConfiguration().getLocales().get(0).toString().toLowerCase();
 						if (locale.charAt(locale.length() - 1) == '_') {
@@ -1170,14 +1170,14 @@ public class TraceActivity extends AppCompatActivity {
 
 						if (list[list.length - 1].length() == 2) {
 							if (list[list.length - 1].equals(countryCode)) {
-								sites.add(TRANCO_TOP_10[i]);
+								sites.add(TRANCO_TOP_1000[i]);
 							}
 						} else if (list[0].length() == 5 && list[0].charAt(2) == '-') {
 							if (list[0].equals(locale)) {
-								sites.add(TRANCO_TOP_10[i]);
+								sites.add(TRANCO_TOP_1000[i]);
 							}
 						} else {
-							sites.add(TRANCO_TOP_10[i]);
+							sites.add(TRANCO_TOP_1000[i]);
 						}
 					}
 					Toast.makeText(TraceActivity.this, "Trace routes will be saved to trace_ping.csv", Toast.LENGTH_SHORT).show();
