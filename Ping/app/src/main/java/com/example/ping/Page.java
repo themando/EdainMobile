@@ -20,13 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-// WebPageTest is used for measuring and analyzing the performance of web pages.
-// https://sites.google.com/a/webpagetest.org/docs/
-//
-// The API key is limited to 200 page loads per day.
-// If need to do more testing then should consider running a private instance:
-// https://sites.google.com/a/webpagetest.org/docs/private-instances
-
 public class Page extends Activity {
     FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance(); // firestore instance
     EditText editText;
