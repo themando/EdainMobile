@@ -64,8 +64,6 @@ public class Speed extends Activity {
         Button speedButton = (Button) findViewById(R.id.speedButton);
         Button exportButton = (Button) findViewById(R.id.exportSpeedButton);
         Button clearButton = (Button) findViewById(R.id.clearSpeedButton);
-        final EditText classText = (EditText) findViewById(R.id.classEditText);
-        final EditText intervText = (EditText) findViewById(R.id.intervalEditText);
 
         // Warning toast, to alert user that this feature will take some time to complete
         Toast toast = Toast.makeText(Speed.this, "Please wait after clicking on Speed- this will take 1-2 minutes!", Toast.LENGTH_LONG);
@@ -77,31 +75,11 @@ public class Speed extends Activity {
         speedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int classInt;
-                int intervInt;
-                String classStr = classText.getText().toString();
-                String intervStr = intervText.getText().toString();
-                hideSoftwareKeyboard(classText);
-                hideSoftwareKeyboard(intervText);
-
-                // Invalid inputs - empty
-                if (classStr.isEmpty() || intervStr.isEmpty()) {
-                    classInt = 1;
-                    intervInt = 1;
-                } else {
-                    classInt = Integer.parseInt(classStr);
-                    intervInt = Integer.parseInt(intervStr);
-                }
-
-                // Invalid inputs - values
-                if (classInt <= 0 || intervInt <= 0) {
-                    return;
-                }
 
                 // Run speed test
                 Python py = Python.getInstance();
                 PyObject pyf = py.getModule("run_speedtest");
-                PyObject obj = pyf.callAttr("main", classInt, intervInt);
+                PyObject obj = pyf.callAttr("main");
                 Log.i("printing obj", String.valueOf(obj));
 
                 Map<String, Object> m = new HashMap<>();
@@ -255,16 +233,5 @@ public class Speed extends Activity {
         }
     }
 
-    /**
-     * Hides the keyboard
-     *
-     * @param currentEditText The current selected edittext
-     */
-    public void hideSoftwareKeyboard(EditText currentEditText) {
-        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm.isActive()) {
-            imm.hideSoftInputFromWindow(currentEditText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
-        }
-    }
 
 }

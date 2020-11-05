@@ -65,10 +65,8 @@ def main(class_duration, interval):
         writer.writerow(headers)
         f.close()
 
-    iterations = (class_duration // interval) + 1
-    for i in range(int(iterations)):
-        json_data = speedtest()
-        row_metrics = json_parser(json_data)
-        write_csv(row_metrics)
-        sleep_minutes(interval)
-        return json_data
+    json_data = speedtest()
+    row_metrics = json_parser(json_data)
+    write_csv(row_metrics)
+
+    return json_data
