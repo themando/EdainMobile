@@ -72,6 +72,7 @@ import com.example.ping.Wifi_Network_Info.viewmodel.WifiViewModel;
 
 public class Latency extends AppCompatActivity {
     private static final String FILE_NAME = "ping.csv";
+    public String Header;
     static WifiViewModel model;
    // static int doc_ser;
     static String wifi_name = "Time Limit Exceeded to get Wifi Network from API";
@@ -89,7 +90,7 @@ public class Latency extends AppCompatActivity {
      */ FirebaseFirestore db = FirebaseFirestore.getInstance();
 
 
-    String[] sites = {
+   static String[] sites = {
             "google.com",
             "facebook.com",
             "youtube.com",
@@ -1091,7 +1092,7 @@ public class Latency extends AppCompatActivity {
             "moz.com",
             "nokia.com",};
 
-    ArrayList<String> Sites;
+    static ArrayList<String> Sites;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -1135,8 +1136,8 @@ public class Latency extends AppCompatActivity {
                     Toast.makeText(Latency.this, "Please enter some number!", Toast.LENGTH_SHORT).show();
                 } else {
                     //pick top n sites for pinging
-                    //Sites = new ArrayList<>(Arrays.asList(sites).subList(0, Integer.parseInt(String.valueOf(n.getText()))));
-                    ArrayList<String> Sites = new ArrayList<>();
+
+                  //  ArrayList<String> Sites = new ArrayList<>();
 
                     for (int i = 0; i < Integer.parseInt(String.valueOf(n.getText())); i++){
                         String[] list = sites[i].split("\\.");
@@ -1160,6 +1161,7 @@ public class Latency extends AppCompatActivity {
                             Sites.add(sites[i]);
                         }
                     }
+                    Header = "Tranco Top" + Integer.toString(Sites.size());
 
                     Toast.makeText(Latency.this, "Latency results will be saved to ping.csv", Toast.LENGTH_SHORT).show();
 
@@ -1170,7 +1172,7 @@ public class Latency extends AppCompatActivity {
                     }
                     tl.removeAllViews();
                     /**Start Pinging, call async function**/
-                    addHeaders();
+                    addHeaders(Header);
                     asyncPing = new PingTrancoSites();
                     asyncPing.execute(Sites);
                     progressBar.setVisibility(View.INVISIBLE);
@@ -1532,7 +1534,7 @@ public class Latency extends AppCompatActivity {
     }
 
     //Add Headers to the tableLayout
-    public void addHeaders(){
+    public void addHeaders(String header){
 
         /** Create a TableRow dynamically **/
 
@@ -1548,7 +1550,7 @@ public class Latency extends AppCompatActivity {
 
         TextView newRow = new TextView(this);
 
-        newRow.setText("Tranco Top 100:");
+        newRow.setText(header);
 
         newRow.setTextColor(Color.BLACK);
         newRow.setAllCaps(true);
