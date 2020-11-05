@@ -20,19 +20,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-// WebPageTest is used for measuring and analyzing the performance of web pages.
-// https://sites.google.com/a/webpagetest.org/docs/
-//
-// The API key is limited to 200 page loads per day.
-// If need to do more testing then should consider running a private instance:
-// https://sites.google.com/a/webpagetest.org/docs/private-instances
-
 public class Page extends Activity {
     FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance(); // firestore instance
     EditText editText;
     private WebView webView;
     int n = 0; // number of Tranco sites against which to run the measurements
-    int TIME_OUT = 20; // Timeout for loading page
+    int TIME_OUT = 15; // Timeout for loading page
     long docId;
     HashMap<String, Object> hashMap;
     public static final String[] TRANCO_TOP_1000 = new String[]{

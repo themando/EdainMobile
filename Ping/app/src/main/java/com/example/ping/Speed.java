@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -80,6 +81,8 @@ public class Speed extends Activity {
                 int intervInt;
                 String classStr = classText.getText().toString();
                 String intervStr = intervText.getText().toString();
+                hideSoftwareKeyboard(classText);
+                hideSoftwareKeyboard(intervText);
 
                 // Invalid inputs - empty
                 if (classStr.isEmpty() || intervStr.isEmpty()) {
@@ -249,6 +252,18 @@ public class Speed extends Activity {
             super.onPostExecute(results);
 
             Toast.makeText(Speed.this, "All Done!", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Hides the keyboard
+     *
+     * @param currentEditText The current selected edittext
+     */
+    public void hideSoftwareKeyboard(EditText currentEditText) {
+        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive()) {
+            imm.hideSoftInputFromWindow(currentEditText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
 

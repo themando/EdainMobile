@@ -70,5 +70,5 @@ def main(class_duration, interval):
         json_data = speedtest()
         row_metrics = json_parser(json_data)
         write_csv(row_metrics)
-        #sleep_minutes(interval)
+        sleep_minutes(interval)
         return json_data
