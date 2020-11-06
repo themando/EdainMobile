@@ -18,7 +18,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".Page" />
-        <activity android:name=".Ping" />
         <activity android:name=".Speed" />
         <activity android:name=".FragmentHolder" />
         <activity android:name=".Latency" />
