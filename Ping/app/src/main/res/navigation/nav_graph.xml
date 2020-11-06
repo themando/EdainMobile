@@ -11,7 +11,7 @@
         android:id="@+id/fragmentDNS"
         android:name="com.example.ping.dns_resolution.view.DnsResolution"
         android:label="fragmentDNS"
-        tools:layout="@layout/activity_dnsResolution"
+        tools:layout="@layout/activity_dns_resolution"
         >
     </fragment>
 </navigation>
