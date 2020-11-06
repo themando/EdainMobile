@@ -6,7 +6,12 @@ import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.SystemClock;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.ping.dns_resolution.model.DnsModel;
 import com.example.ping.dns_resolution.service.DnsServiceApiInterface;
@@ -39,10 +44,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class GetIpAddress {
     String dnsServer;
     Context context;
+    int n;
+    ProgressBar progressBar;
+    TextView textView;
     HashMap<String, Object> hashMap = new HashMap<>();
 
-    GetIpAddress(Context context) {
+    GetIpAddress(Context context, ProgressBar progressBar, TextView textView, int n) {
         this.context = context;
+        this.progressBar = progressBar;
+        this.textView = textView;
+        this.n = n;
         hashMap.put("resolved_ipv4", "NaN");
         hashMap.put("resolved_ipv6", "NaN");
     }
@@ -70,8 +81,8 @@ public class GetIpAddress {
     }
 
     // method for getting the IP Addresses and resolution time by calling DnsResolutionTask
-    public void getDnsStuff(final String url, final DocumentReference docId) {
-        DnsResolutionTask task = new DnsResolutionTask(url, docId);
+    public void getDnsStuff(final String url, final DocumentReference docID, double fractionComplete) {
+        DnsResolutionTask task = new DnsResolutionTask(url, docID, fractionComplete);
         task.execute();
     }
 
@@ -80,12 +91,14 @@ public class GetIpAddress {
         String url;
         DocumentReference docId;
         double resolved_time = 0;
+        double fractionComplete = 0;
         boolean do_resolved_time = false;
         HashMap<String, Object> hashMap = new HashMap<>();
 
-        DnsResolutionTask(String url, DocumentReference docId) {
+        DnsResolutionTask(String url, DocumentReference docId, double fractionComplete) {
             this.url = url;
             this.docId = docId;
+            this.fractionComplete = fractionComplete;
             hashMap.put("resolved_ipv4", "NaN");
             hashMap.put("resolved_ipv6", "NaN");
             hashMap.put("resolved_time_ipv4", "NaN");
@@ -208,6 +221,29 @@ public class GetIpAddress {
             final HashMap<String, Object> hashMap = getHashMap();
             hashMap.put("resolved_time", hashMap.get("resolved_time"));
             docId.collection("metric").document(url).set(hashMap);
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    if((int)(fractionComplete) != 1) {
+                        progressBar.setProgress((int) (fractionComplete * 100));
+                        String progress = String.valueOf((int) (fractionComplete * 100));
+                        textView.setText(String.format("%s/100", progress));
+                    }
+                    else{
+                        progressBar.setProgress((int) (fractionComplete * 100));
+                        String progress = String.valueOf((int) (fractionComplete * 100));
+                        textView.setText(String.format("%s/100", progress));
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        progressBar.setVisibility(View.INVISIBLE);
+                        textView.setVisibility(View.INVISIBLE);
+                        Toast.makeText(context, "DNS Data for Top " + n + " Tranco Sites stored in Firestore", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
             clear();
         }
 

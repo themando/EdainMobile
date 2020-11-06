@@ -3,6 +3,7 @@ package com.example.ping;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -12,7 +13,12 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.sql.Timestamp;
@@ -1081,6 +1087,7 @@ public class Page extends Activity {
                 webView.clearHistory();
                 webView.clearSslPreferences();
                 webView.clearFormData();
+                webView.setVisibility(View.VISIBLE);
 
                 n = Integer.parseInt(editText.getText().toString());
 
@@ -1151,7 +1158,13 @@ public class Page extends Activity {
                             } else {
                                 data.put("timeout", false);
                                 // store to firestore
-                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
+                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull com.google.android.gms.tasks.Task<Void> task) {
+                                        Toast.makeText(Page.this, "Execution Complete", Toast.LENGTH_SHORT).show();
+                                        webView.setVisibility(View.INVISIBLE);
+                                    }
+                                });
                             }
                         }
                     }
@@ -1193,7 +1206,13 @@ public class Page extends Activity {
                                 Task1 task = new Task1(i + 1);
                                 task.execute();
                             } else {
-                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap);
+                                firebaseFirestore.collection("page_load").document(String.valueOf(docId)).set(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull com.google.android.gms.tasks.Task<Void> task) {
+                                        Toast.makeText(Page.this, "Execution Complete", Toast.LENGTH_SHORT).show();
+                                        webView.setVisibility(View.INVISIBLE);
+                                    }
+                                });
                             }
                         }
                     }
