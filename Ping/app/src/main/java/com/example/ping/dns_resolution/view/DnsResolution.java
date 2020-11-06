@@ -70,10 +70,12 @@ public class DnsResolution extends Fragment {
     TextView aRecord, soaRecord, mxRecord, nsRecord, txtRecord;
     DnsViewModel viewModelARecord, viewModelSOARecord, viewModelMXRecord, viewModelNSRecord, viewModelTXTRecord;
     ScrollView scrollView;
-    ProgressBar progressBar;
+    ProgressBar progressBarCircular, progressBarHorizontal;
     String wifiNetworkName = "Time Limit Exceeded to get Wifi Network from API";
     String countryCode = "No Country Code";
     WifiViewModel model;
+    Integer progress = 0;
+    TextView progressTextView;
 
     // val for deciding whether we want (Top N Tranco Site Data) or (Data for URL)
     boolean val = false;
@@ -83,7 +85,8 @@ public class DnsResolution extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_dns_resolution, container, false);
         scrollView = view.findViewById(R.id.scrollView);
-        progressBar = view.findViewById(R.id.progress_circular);
+        progressBarCircular = view.findViewById(R.id.progress_circular);
+        progressBarHorizontal = view.findViewById(R.id.progress_horizontal);
         editText = view.findViewById(R.id.edit_text);
         editText1 = view.findViewById(R.id.number_text);
         aRecord = view.findViewById(R.id.aRecord);
@@ -92,10 +95,8 @@ public class DnsResolution extends Fragment {
         nsRecord = view.findViewById(R.id.nsRecord);
         txtRecord = view.findViewById(R.id.txtRecord);
         pingButton = view.findViewById(R.id.dnsPingButton);
-        exportButton = view.findViewById(R.id.dnsExportButton);
-        clearButton = view.findViewById(R.id.dnsClearButton);
-        trancoButton = view.findViewById(R.id.dnsTrancoButton);
         firestoreButton = view.findViewById(R.id.firestoreButton);
+        progressTextView = view.findViewById(R.id.progress_text_view);
 
         Context context = this.getContext();
 
@@ -110,7 +111,7 @@ public class DnsResolution extends Fragment {
                     val = false;
                     // launch Progress Bar while retrieving Data
                     scrollView.setVisibility(View.INVISIBLE);
-                    progressBar.setVisibility(View.VISIBLE);
+                    progressBarCircular.setVisibility(View.VISIBLE);
 
                     final Handler handler = new Handler();
                     new Thread(new Runnable() {
@@ -126,7 +127,7 @@ public class DnsResolution extends Fragment {
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        progressBar.setVisibility(View.INVISIBLE);
+                                        progressBarCircular.setVisibility(View.INVISIBLE);
                                         scrollView.setVisibility(View.VISIBLE);
                                     }
                                 });
@@ -136,83 +137,6 @@ public class DnsResolution extends Fragment {
                         }
                     }).start();
                 } else if (!url.equals("")) {
-                    // show no internet connection in the UI thread
-                    new Handler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getContext(), "No Internet Connection", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    // show field can't be empty
-                    new Handler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getContext(), "Field can't be empty", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-        });
-
-        // Click Export Button
-        exportButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                exportCsv();
-            }
-        });
-
-        // Click Clear Button
-        clearButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteCsv();
-            }
-        });
-
-        // Click Tranco Button
-        trancoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String s = editText1.getText().toString();
-                assert context != null;
-                hideSoftwareKeyboard(editText1, context);
-                if (hasConnectivity() & !s.equals("")) {
-                    val = true;
-                    // launch Progress Bar while retrieving Data
-                    scrollView.setVisibility(View.INVISIBLE);
-                    progressBar.setVisibility(View.VISIBLE);
-
-                    //  number of Tranco Sites taken as input
-                    final int n = Integer.parseInt(s);
-
-                    final Handler handler = new Handler();
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                            // get DNS Records for Top N Tranco Sites
-                            BackGroundTask task = new BackGroundTask();
-                            task.execute(n);
-
-                            try {
-                                Thread.sleep((n * 1000));
-                                exportCsv();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Reset Progress Bar
-                                    progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top " + n + " Tranco Sites stored in csv files", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }
-                    }).start();
-                } else if (!s.equals("")) {
                     // show no internet connection in the UI thread
                     new Handler().post(new Runnable() {
                         @Override
@@ -244,7 +168,10 @@ public class DnsResolution extends Fragment {
 
                     // launch Progress Bar while retrieving Data
                     scrollView.setVisibility(View.INVISIBLE);
-                    progressBar.setVisibility(View.VISIBLE);
+                    progressBarHorizontal.setVisibility(View.VISIBLE);
+                    progressBarHorizontal.setProgress(0);
+                    progressTextView.setVisibility(View.VISIBLE);
+                    progressTextView.setText("0/100");
 
                     final int n = Integer.parseInt(s);
 
@@ -261,14 +188,6 @@ public class DnsResolution extends Fragment {
                                 e.printStackTrace();
                                 Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
                             }
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Reset Progress Bar
-                                    progressBar.setVisibility(View.INVISIBLE);
-                                    Toast.makeText(getContext(), "DNS Data for Top " + n + " Tranco Sites stored in Firestore", Toast.LENGTH_SHORT).show();
-                                }
-                            });
                         }
                     }).start();
                 } else if (!s.equals("")) {
@@ -614,7 +533,7 @@ public class DnsResolution extends Fragment {
         data.put("Wifi Network", network_data.get("Wifi Network"));
 
         // instantiate getIpAddress for doing DNS Resolution
-        GetIpAddress getIpAddress = new GetIpAddress(this.getContext());
+        GetIpAddress getIpAddress = new GetIpAddress(this.getContext(),progressBarHorizontal, progressTextView, n);
         getIpAddress.getDnsServer();
 
         // checks whether the dns server associated with our network connection is public or not
@@ -635,16 +554,18 @@ public class DnsResolution extends Fragment {
                             locale = locale.replace('_', '-');
                         }
 
+                        double val = i+1;
+                        double fractionComplete = val/n;
                         if (list[list.length - 1].length() == 2) {
                             if (list[list.length - 1].equals(countryCode)) {
-                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference, fractionComplete);
                             }
                         } else if (list[0].length() == 5 && list[0].charAt(2) == '-') {
                             if (list[0].equals(locale)) {
-                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                                getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference, fractionComplete);
                             }
                         } else {
-                            getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference);
+                            getIpAddress.getDnsStuff(top1000TrancoSites[i], documentReference, fractionComplete);
                         }
                     }
                 }

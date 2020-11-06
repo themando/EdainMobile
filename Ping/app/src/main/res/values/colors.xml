@@ -3,6 +3,9 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+    <color name="themeColor">#121625</color>
+    <color name="buttonColor">#2CE9D8</color>
+    <color name="textColor">#15f4ee</color>
     <color name="white_color">#ffffff</color>
     <color name="light_grey_color">#aeadad</color>
     <color name="grey_color">#575757</color>

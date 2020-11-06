@@ -6,7 +6,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
-    android:background="@color/black_color"
+    android:background="@color/themeColor"
     tools:context=".TraceActivity">
 
     <LinearLayout
@@ -25,9 +25,10 @@
             android:layout_marginTop="20dp"
             android:ems="7"
             android:layout_marginRight="10dp"
-            android:background="@layout/edit_text_border"
+            android:background="@drawable/border"
+            android:backgroundTint="@color/black_color"
             android:textColor="@color/white_color"
-            android:textColorHint="@color/light_grey_color"
+            android:textColorHint="@color/white_color"
             android:hint="Domain name"
             android:padding="10dp"
             android:inputType="text" />
@@ -37,13 +38,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight=".50"
+            android:background="@drawable/border"
+            android:backgroundTint="@color/black_color"
             android:layout_marginTop="20dp"
-            android:background="@layout/edit_text_border"
             android:ems="3"
             android:hint="Top N"
             android:padding="10dp"
             android:textColor="@color/white_color"
-            android:textColorHint="@color/light_grey_color"
+            android:textColorHint="@color/white_color"
             android:inputType="text" />
 
 
@@ -73,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight=".50"
                 android:layout_marginRight="10dp"
-                android:background="@layout/button_border"
+                android:background="@drawable/border"
                 android:backgroundTint="@color/colorAccent"
                 android:text="Ping URL" />
 
@@ -82,7 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight=".50"
-                android:background="@layout/button_border"
+                android:background="@drawable/border"
                 android:backgroundTint="@color/colorAccent"
                 android:text="Ping Tranco Top Sites" />
 
