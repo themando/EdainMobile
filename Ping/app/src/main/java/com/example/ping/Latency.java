@@ -1132,6 +1132,7 @@ public class Latency extends AppCompatActivity {
             public void onClick(View v) {
                 tableLayout = (RelativeLayout) findViewById(R.id.tablelayout);
                 tl = (TableLayout) findViewById(R.id.table);
+                tl.setBackgroundColor(Color.BLACK);
 
                 if (n.getText().length() == 0) {
                     Toast.makeText(Latency.this, "Please enter some number!", Toast.LENGTH_SHORT).show();
@@ -1162,7 +1163,7 @@ public class Latency extends AppCompatActivity {
                                 Sites.add(sites[i]);
                         }
                     }
-                    Header = "Tranco Top " + Integer.toString(Sites.size());
+                    Header = "Tranco Top " + n.getText();
 
                     Toast.makeText(Latency.this, "Latency results will be saved to ping.csv", Toast.LENGTH_SHORT).show();
 
@@ -1545,19 +1546,14 @@ public class Latency extends AppCompatActivity {
 
         tr = new TableRow(this);
 
-        tr.setLayoutParams(new LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.WRAP_CONTENT));
+        tr.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         /** Creating a TextView to add to the newRow **/
 
         TextView newRow = new TextView(this);
-
         newRow.setText(header);
-
-        newRow.setTextColor(Color.BLACK);
+        newRow.setBackgroundColor(Color.BLACK);
+        newRow.setTextColor(Color.CYAN);
         newRow.setAllCaps(true);
         newRow.setTextSize(18);
 
@@ -1574,74 +1570,50 @@ public class Latency extends AppCompatActivity {
         TextView anotherRow = new TextView(this);
 
         anotherRow.setText("Avg.Time(in ms):");
-
-        anotherRow.setTextColor(Color.BLACK);
+        newRow.setBackgroundColor(Color.BLACK);
+        anotherRow.setTextColor(Color.CYAN);
         anotherRow.setAllCaps(true);
         anotherRow.setTextSize(18);
 
         anotherRow.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-
         anotherRow.setPadding(1, 100, 5, 0);
-
         anotherRow.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-
         tr.addView(anotherRow); // Adding textView to TableRow.
 
         /** Add the TableRow to the TableLayout **/
 
-        tl.addView(tr, new TableLayout.LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.WRAP_CONTENT));
-
+        tl.addView(tr, new TableLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
         // we are adding two textviews for the divider because we have two columns
 
         tr = new TableRow(this);
-
-        tr.setLayoutParams(new LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.WRAP_CONTENT));
+        tr.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         /** Creating another textview **/
 
         TextView divider = new TextView(this);
 
         divider.setText("-----------------------------");
-
-        divider.setTextColor(Color.BLACK);
-
+        divider.setTextColor(Color.WHITE);
+        divider.setBackgroundColor(Color.BLACK);
         divider.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-
         divider.setPadding(50, 0, 0, 0);
-
         divider.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-
         tr.addView(divider); // Adding textView to TableRow.
 
         TextView divider2 = new TextView(this);
 
         divider2.setText("-------------------------");
-
         divider2.setTextColor(Color.BLACK);
-
+        divider2.setTextColor(Color.WHITE);
+        divider2.setBackgroundColor(Color.BLACK);
         divider2.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-
         divider2.setPadding(0, 0, 0, 0);
-
         divider2.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-
         tr.addView(divider2); // Adding textView to TableRow.
 
         // Add the TableRow to the TableLayout
 
-        tl.addView(tr, new TableLayout.LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.WRAP_CONTENT));
+        tl.addView(tr, new TableLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
     }
 
@@ -1652,20 +1624,14 @@ public class Latency extends AppCompatActivity {
 
         tr = new TableRow(this);
 
-        tr.setLayoutParams(new LayoutParams(
-
-                LayoutParams.MATCH_PARENT,
-
-                LayoutParams.WRAP_CONTENT));
+        tr.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
         /** Creating a TextView to add to the newRow **/
 
         newRow = new TextView(this);
-
         newRow.setText(site);
-
-        newRow.setTextColor(Color.DKGRAY);
-
+        newRow.setTextColor(Color.WHITE);
+        newRow.setBackgroundColor(Color.BLACK);
         newRow.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
 
         newRow.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
@@ -1681,7 +1647,7 @@ public class Latency extends AppCompatActivity {
         String[] tmp = result.split(",");
 
         if(result.split(",").length > 2) {
-            anotherRow.setText(tmp[5]); anotherRow.setTextColor(Color.DKGRAY);
+            anotherRow.setText(tmp[5]); anotherRow.setTextColor(Color.CYAN);
         }
         else if (tmp.length<3){
             Log.i("site unreachable/loss 100%", Arrays.toString(tmp));
@@ -1691,19 +1657,13 @@ public class Latency extends AppCompatActivity {
         }
 
         anotherRow.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-
         anotherRow.setPadding(5, 5, 5, 5);
-
         anotherRow.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-
         tr.addView(anotherRow); // Adding textView to TableRow.
 
         // Add the TableRow to the TableLayout
-
         tl.addView(tr, new TableLayout.LayoutParams(
-
                 LayoutParams.MATCH_PARENT,
-
                 LayoutParams.WRAP_CONTENT));
 
     }

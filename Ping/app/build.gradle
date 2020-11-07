@@ -19,7 +19,7 @@ android {
             abiFilters "armeabi-v7a", "x86"
         }
         python {
-            buildPython "/usr/local/bin/python3"
+            buildPython "C:\\Users\\Administrator.TEST4\\AppData\\Local\\Programs\\Python\\Python37\\python.exe"
             pip {
                 install "selenium"
                 install "speedtest-cli"

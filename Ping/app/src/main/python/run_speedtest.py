@@ -58,7 +58,7 @@ def sleep_minutes(minutes):
     time.sleep(minutes * 60)
 
 
-def main(class_duration, interval):
+def main():
     # New bare file with headers
     with open(save_csvfile, 'w') as f:
         writer = csv.writer(f)
