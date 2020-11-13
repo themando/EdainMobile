@@ -1,0 +1,116 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:background="@color/themeColor"
+    tools:context=".TraceActivity">
+
+    <LinearLayout
+        android:id="@+id/texts"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:weightSum="1.0">
+
+        <EditText
+            android:id="@+id/editTextPing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".50"
+            android:layout_marginTop="20dp"
+            android:ems="7"
+            android:layout_marginRight="10dp"
+            android:background="@drawable/border"
+            android:backgroundTint="@color/black_color"
+            android:textColor="@color/white_color"
+            android:textColorHint="@color/white_color"
+            android:hint="Domain name"
+            android:padding="10dp"
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/editTrancoNum"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight=".50"
+            android:background="@drawable/border"
+            android:backgroundTint="@color/black_color"
+            android:layout_marginTop="20dp"
+            android:ems="3"
+            android:hint="Top N"
+            android:padding="10dp"
+            android:textColor="@color/white_color"
+            android:textColorHint="@color/white_color"
+            android:inputType="text" />
+
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/texts"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:weightSum="1.0">
+
+            <Button
+                android:id="@+id/buttonLaunch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight=".50"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/border"
+                android:backgroundTint="@color/colorAccent"
+                android:text="Ping URL" />
+
+            <Button
+                android:id="@+id/buttonTranco"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight=".50"
+                android:background="@drawable/border"
+                android:backgroundTint="@color/colorAccent"
+                android:text="Ping Tranco Top Sites" />
+
+
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBarPing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/listViewTraceroute"
+            android:layout_below="@+id/buttons"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+
+    <ListView
+        android:id="@+id/listViewTraceroute"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttons"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="15dp" />
+
+
+</RelativeLayout>
