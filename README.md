@@ -1,6 +1,6 @@
-# EdainMobile
+# Edain: Comprehensive QoE and QoE monitoring suite
 
-EdainMobile provides a set of tools to measure network performance, network speed and web page performance from an Android device. The three primary modules are Ping, Speed Test and Page Load.
+Edain provides a set of tools to measure network performance, network speed and web page performance from an Android device. The primary modules are throughput, latency, page load time and YouTube QoE.
 
 ## Latency
 
