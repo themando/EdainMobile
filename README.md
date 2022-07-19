@@ -5,12 +5,12 @@ Edain provides a set of tools to measure network performance, network speed and 
 If you implement Edain in your project, please use the following citation:
 
 `
-Adarsh, Vivek, Michael Nekrasov, Udit Paul, and Elizabeth M. Belding. "Estimation of congestion from cellular walled gardens using passive measurements." IEEE Transactions on Mobile Computing (2021).
+Adarsh, Vivek, Michael Nekrasov, Udit Paul, and Elizabeth M. Belding. "Estimation of Congestion from Cellular Walled Gardens using Passive Measurements." IEEE Transactions on Mobile Computing (2021).
 `
 
 ```
 @article{adarsh2021TMC,
-  title={Estimation of congestion from cellular walled gardens using passive measurements},
+  title={Estimation of Congestion from Cellular Walled Gardens using Passive Measurements},
   author={Adarsh, Vivek and Nekrasov, Michael and Paul, Udit and Belding, Elizabeth M},
   journal={IEEE Transactions on Mobile Computing},
   year={2021},
